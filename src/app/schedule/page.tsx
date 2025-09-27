@@ -1,6 +1,8 @@
 "use client"; // This directive marks the component as a Client Component
 
 import React from 'react';
+import { useSession } from "next-auth/react";
+import { Navbar } from "@/components/navbar"
 
 const ScreenshotIcon = ({ className }: { className?: string }) => (
 		<svg className="w-10 h-10 sm:w-12 sm:h-12 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -15,27 +17,7 @@ const ManualIcon = ({ className }: { className?: string }) => (
 		</svg>
 );
 
-// Sub-component for the Header
-const Header: React.FC = () => (
-    <header className="bg-white w-full border-b border-slate-200">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            {/* Logo and Brand */}
-            <div className="flex items-center">
-                <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center">
-                    {/* Diamond/K shape inside */}
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                    </svg>
-                </div>
-                <span className="ml-3 text-xl font-bold tracking-wider text-indigo-800">KNIGHTPOOL</span>
-            </div>
-            {/* Navigation Button (like "Dashboard") */}
-            <button className="bg-violet-100 text-indigo-700 font-semibold text-sm py-2 px-5 rounded-lg hover:bg-violet-200 transition-colors duration-300">
-                Dashboard
-            </button>
-        </div>
-    </header>
-);
+
 
 // Interface for the props of the DiamondButton component
 interface DiamondButtonProps {
@@ -47,6 +29,10 @@ interface DiamondButtonProps {
 
 // Main App Component
 const App: React.FC = () => {
+
+      const { data: session, status } = useSession();
+        const isLoggedIn = status === "authenticated";
+    
     // Event handlers for the buttons
     const handleManualInputClick = (): void => {
         console.log('Manual Input button clicked!');
@@ -73,7 +59,8 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-[#F9F5FF] text-slate-800 font-sans">
-            <Header />
+                <Navbar isLoggedIn={isLoggedIn}></Navbar>
+
 
             {/* Main Content Section */}
             <main className="flex-grow flex flex-col items-center justify-center p-4 text-center">

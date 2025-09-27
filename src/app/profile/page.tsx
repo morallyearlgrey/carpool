@@ -1,12 +1,18 @@
 "use client"; // This line tells Next.js to render this component on the client
 
 import React, { useState } from 'react';
+import { useSession } from "next-auth/react";
+import { Navbar } from "@/components/navbar"
+
 
 // Main App component
 export default function App() {
   // State to manage the selected gender ('F', 'M', or null)
   const [selectedGender, setSelectedGender] = useState(null);
 	const [currentPage, setCurrentPage] = useState('profile');
+
+  const { data: session, status } = useSession();
+    const isLoggedIn = status === "authenticated";
 
   /**
    * Handles the click event for the gender selection buttons.
@@ -25,6 +31,7 @@ export default function App() {
   return (
     // Main container with a light purple background
     <div className="min-h-screen font-sans text-[#663399] flex flex-col">
+    <Navbar isLoggedIn={isLoggedIn}></Navbar>
       
       {/* Header Section */}
       <header className="w-full p-6 sm:p-8">

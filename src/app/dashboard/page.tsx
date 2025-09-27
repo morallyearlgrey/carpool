@@ -21,7 +21,13 @@ const CarIcon = ({ className }: { className?: string }) => (
 );
 // --- End of SVG Icons ---
 
+import { useSession } from "next-auth/react";
+import { Navbar } from "@/components/navbar"
+
+
 const DashboardPage = () => {
+  const { data: session, status } = useSession();
+    const isLoggedIn = status === "authenticated";
   // State to trigger the animation after the component mounts
   const [isMounted, setIsMounted] = useState('dashboard');
   useEffect(() => {
@@ -35,18 +41,11 @@ const DashboardPage = () => {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br p-6 lg:p-10 text-gray-800 font-sans"
+      className="flex flex-col min-h-screen overflow-x-hidden"
       // style={{backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`}}
     >
-      <header className={`flex justify-between items-center bg-white bg-opacity-40 rounded-lg p-4 mb-8 shadow-lg shadow-purple-500/10 backdrop-blur-lg ${animationClasses('0ms')}`}>
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-purple-600 rounded-lg transform rotate-45 flex items-center justify-center shadow-md">
-            <span className="transform -rotate-45 text-white text-xs font-bold">K</span>
-          </div>
-          <span className="text-xl font-bold tracking-wider text-purple-800">KNIGHTPOOL</span>
-        </div>
-        <span className="text-xl font-semibold text-purple-700">Dashboard</span>
-      </header>
+          <Navbar isLoggedIn={isLoggedIn}></Navbar>
+
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         

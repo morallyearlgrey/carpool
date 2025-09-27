@@ -2,9 +2,16 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
+import { Navbar } from "@/components/navbar"
 const words = ["Smarter", "Faster", "Greener", "Connected"];
 
+import { useSession } from "next-auth/react";
+
+
 const HomePage: React.FC = () => {
+   const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated";
+
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [fade, setFade] = useState(true);
 
@@ -21,27 +28,8 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen font-sans"> {/* bg color is now in globals.css */}
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-6 py-4 md:px-12">
-        <div className="flex items-center space-x-2">
-          <svg className="w-8 h-8 text-[#663399]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w.org/2000/svg">
-            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
-          </svg>
-          <h1 className="text-2xl font-extrabold text-[#663399] tracking-wide">
-            KnightPool
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4"> {/* Ensured items-center here */}
-          {/* Responsive buttons: smaller on mobile, larger on desktop */}
-          <button className="px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-white transition whitespace-nowrap">
-            Login
-          </button>
-          <button className="buttons px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base text-white font-medium rounded-full shadow-md transition whitespace-nowrap">
-            Sign Up
-          </button>
-        </div>
-      </nav>
-
+    <Navbar isLoggedIn={isLoggedIn}></Navbar>
+      
       {/* Hero Section */}
       <main className="flex flex-1 flex-col md:flex-row items-center w-full max-w-7xl mx-auto px-6">
         {/* Left: Image Container */}

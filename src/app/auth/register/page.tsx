@@ -7,6 +7,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
+import { useSession } from "next-auth/react";
+import { Navbar } from "@/components/navbar"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
@@ -45,6 +48,9 @@ const genders = [
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() { 
+      const { data: session, status } = useSession();
+        const isLoggedIn = status === "authenticated";
+        
     const [error, setError] = useState("");
     const [hasVehicle, setHasVehicle] = useState(false);
     const router = useRouter();
@@ -80,7 +86,7 @@ export default function RegisterPage() {
             throw new Error(data.message || "Registration failed");
         } 
 
-        router.push("/api/signin");
+        router.push("/auth/signin");
         } catch (err: any) {
             setError(err.message);
         }
@@ -89,6 +95,9 @@ export default function RegisterPage() {
 
     return (
         <div className="flex flex-col min-h-screen overflow-x-hidden">
+                      <Navbar isLoggedIn={isLoggedIn}></Navbar>
+            
+
             <div className="">ohhh you wanna sign in so bad</div>
             
             <Form {...form}>
