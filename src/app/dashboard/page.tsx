@@ -157,27 +157,45 @@ const DashboardPage = () => {
                   const finalTime = fd.get('finalTime') as string;
 
                   try {
-                    const res = await fetch('/api/recommendations', {
-                      method: 'POST',
-                      headers: { 'content-type': 'application/json' },
-                      body: JSON.stringify({
-                        userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
-                        mode: 'rides',
-                        date,
-                        startTime,
-                        beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
-                        finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
-                      }),
-                    });
+                    if (rideMode === 'request') {
+                      // 🔹 Ride Request flow
+                      const res = await fetch('/api/recommendations', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+                          mode: 'rides',
+                          date,
+                          startTime,
+                          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+                          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+                        }),
+                      });
 
-                    const data = await res.json();
-                    const candidates = data.candidates || [];
+                      const data = await res.json();
+                      const candidates = data.candidates || [];
 
-                    if (candidates.length > 0) {
-                      setRequestResults(candidates);
-                    } else {
-                      // No matches → post publicly
-                      await fetch('/api/requests/public', {
+                      if (candidates.length > 0) {
+                        setRequestResults(candidates);
+                      } else {
+                        // No matches → post publicly
+                        await fetch('/api/requests/public', {
+                          method: 'POST',
+                          headers: { 'content-type': 'application/json' },
+                          body: JSON.stringify({
+                            userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+                            beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+                            finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+                            date,
+                            startTime,
+                            finalTime,
+                          }),
+                        });
+                        setRequestResults([]);
+                      }
+                    } else if (rideMode === 'offer') {
+                      // 🔹 Ride Offer flow
+                      await fetch('/api/offers', {
                         method: 'POST',
                         headers: { 'content-type': 'application/json' },
                         body: JSON.stringify({
@@ -189,7 +207,7 @@ const DashboardPage = () => {
                           finalTime,
                         }),
                       });
-                      setRequestResults([]);
+                      setRequestResults([]); // you might later show "Offer posted!" instead
                     }
                   } catch (err) {
                     console.error(err);
@@ -238,18 +256,21 @@ const DashboardPage = () => {
                       type="submit"
                       className="px-4 py-2 bg-purple-600 text-white rounded"
                     >
-                      Request
+                      {rideMode === 'request' ? 'Request' : 'Offer'}
                     </button>
                   </div>
                 ) : (
                   <div className="mt-6 flex flex-col items-center gap-2">
-                    <span className="text-purple-700 font-medium">Searching...</span>
+                    <span className="text-purple-700 font-medium">
+                      {rideMode === 'request' ? 'Searching...' : 'Posting...'}
+                    </span>
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-2 bg-purple-600 animate-pulse w-1/2"></div>
                     </div>
                   </div>
                 )}
               </form>
+
 
               {/* Results Section */}
               {requestResults && requestResults.length === 0 && (
