@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { useSession } from "next-auth/react";
 
@@ -95,14 +96,15 @@ const HomePage: React.FC = () => {
           </p>
 
           {/* Button */}
-          <button
-            className={`buttons px-8 py-3 text-base md:text-lg text-white font-semibold rounded-full shadow-lg transition transform duration-500 hover:scale-105 hover:shadow-xl ${
-              animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-            }`}
-            style={{ transitionDelay: "600ms" }}
-          >
-            Get Started
-          </button>
+          <Link href={isLoggedIn ? "/dashboard" : "/auth/register"} passHref>
+            <button
+              className={`buttons px-8 py-3 text-base md:text-lg text-white font-semibold rounded-full shadow-lg transition transform duration-100 hover:scale-105 hover:shadow-xl cursor-pointer ${
+                animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              }`}
+            >
+              Get Started
+            </button>
+          </Link>
         </div>
       </main>
 
