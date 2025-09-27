@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
           <button className="px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-white transition whitespace-nowrap">
             Login
           </button>
-          <button className="px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-[#663399] text-white font-medium rounded-full shadow-md hover:bg-[#5a2e8c] transition whitespace-nowrap">
+          <button className="buttons px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base text-white font-medium rounded-full shadow-md transition whitespace-nowrap">
             Sign Up
           </button>
         </div>
@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
             Connect with coworkers, friends, or nearby riders for a smarter,
             eco-friendly commute. Powered by Google Maps.
           </p>
-          <button className="px-8 py-3 text-base md:text-lg bg-[#663399] text-white font-semibold rounded-full shadow-lg hover:bg-[#5a2e8c] transition">
+          <button className="buttons px-8 py-3 text-base md:text-lg text-white font-semibold rounded-full shadow-lg transition">
             Get Started
           </button>
         </div>

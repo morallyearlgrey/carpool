@@ -65,13 +65,13 @@ const DashboardPage = () => {
         </div>
 
         <div className={`lg:col-span-1 flex flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
-          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+          <button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
             <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
               <PlusCircleIcon className="w-8 h-8 transition-transform duration-300 group-hover:rotate-90" />
               Request a Ride
             </span>
           </button>
-          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+          <button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
             <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
               <CarIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
               Offer a Ride
@@ -85,11 +85,11 @@ const DashboardPage = () => {
             <UserIcon className="w-16 h-16 text-gray-400"/>
           </div>
           <div className="w-full space-y-4">
-            <input type="text" placeholder="Name" className="w-full p-3 rounded-lg bg-white bg-opacity-80 border border-purple-200 transition-all duration-300 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 focus:shadow-lg focus:shadow-purple-500/20 focus:outline-none" />
-            <input type="text" placeholder="Age" className="w-full p-3 rounded-lg bg-white bg-opacity-80 border border-purple-200 transition-all duration-300 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 focus:shadow-lg focus:shadow-purple-500/20 focus:outline-none" />
-            <input type="text" placeholder="Gender" className="w-full p-3 rounded-lg bg-white bg-opacity-80 border border-purple-200 transition-all duration-300 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 focus:shadow-lg focus:shadow-purple-500/20 focus:outline-none" />
-            <input type="text" placeholder="School" className="w-full p-3 rounded-lg bg-white bg-opacity-80 border border-purple-200 transition-all duration-300 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 focus:shadow-lg focus:shadow-purple-500/20 focus:outline-none" />
-            <input type="text" placeholder="Work" className="w-full p-3 rounded-lg bg-white bg-opacity-80 border border-purple-200 transition-all duration-300 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 focus:shadow-lg focus:shadow-purple-500/20 focus:outline-none" />
+            <input type="text" placeholder="Name" className="inputs" />
+            <input type="text" placeholder="Age" className="inputs" />
+            <input type="text" placeholder="Gender" className="inputs" />
+            <input type="text" placeholder="School" className="inputs" />
+            <input type="text" placeholder="Work" className="inputs" />
           </div>
         </div>
       </main>
