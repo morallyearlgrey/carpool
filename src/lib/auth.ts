@@ -15,9 +15,9 @@ export const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         const client = await clientPromise;
-        const db = client.db();
+        const db = client.db("carpool");
+        
         const user = await db.collection("users").findOne({ email: credentials.email });
-
         if (!user) return null;
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
@@ -25,8 +25,9 @@ export const authOptions: AuthOptions = {
 
         return {
           id: user._id.toString(),
-          name: user.name,
           email: user.email,
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+
         };
       },
     }),
@@ -38,6 +39,25 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: "/auth/signin",
   },
+
+  callbacks: {
+        async jwt({ token, user }) {
+        if (user) {
+            token.id = user.id;
+        }
+        return token;
+        },
+         async session({ session, token }) {
+            return {
+              ...session,
+              user: {
+                ...session.user,
+                id: token.id as string,
+              }
+            }
+        }
+  },
+
 };
 
 const handler = NextAuth(authOptions);
