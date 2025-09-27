@@ -112,6 +112,7 @@ const handleOpenRideForm = async (mode: 'request' | 'offer') => {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             ...requestPayload,
+            userId: session?.user.id,
             driverId: bestMatch.driver._id,
             rideId: bestMatch.rideId,
             requestReceiver: bestMatch.driver._id

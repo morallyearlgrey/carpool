@@ -33,13 +33,14 @@ export async function POST(req: NextRequest) {
 
     // 1. Create the request document
     const newRequest = await RequestModel.create({
-      user: userId,
+      requestSender: userId, // Changed from 'user' to 'requestSender'
+      requestReceiver: requestReceiver || driverId,
       beginLocation,
       finalLocation,
       date: new Date(date),
       startTime,
       finalTime,
-      requestReceiver: requestReceiver || driverId, // Add this field to your request model
+      ...(rideId && { associatedRide: rideId })
     });
 
     // 2. Update the requester's outgoing requests
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Driver/receiver not found' }, { status: 404 });
     }
 
-    // Add to receiver's incoming requests (you might need to add this field to User model)
+    // Add to receiver's incoming requests
     await User.findByIdAndUpdate(
       receiverId,
       { $push: { incomingRequests: newRequest._id } }

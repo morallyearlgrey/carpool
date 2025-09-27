@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: "Schedule" },
 
     // Outgoing requests (requests this user has made)
-    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+    outgoingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
     
     // Incoming requests (requests sent to this user)
     incomingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],

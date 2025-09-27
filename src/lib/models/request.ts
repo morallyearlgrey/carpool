@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const requestSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // requester
+  requestSender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // requester
   requestReceiver: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // who the request is sent to
 
   beginLocation: {
