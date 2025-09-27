@@ -24,20 +24,18 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn }) => {
 
   return (
     <div className="relative w-full z-20">
-      <div className="absolute inset-0 h-50 bg-gradient-to-b from-[#402B52]/90 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 h-28 bg-gradient-to-b from-[#402B52]/90 to-transparent pointer-events-none" />
 
       <div className="relative flex items-center justify-between h-30 w-full px-6">
         <div className="flex justify-start">
-          <Link
-            href="/"
-            className="flex items-center space-x-2"
-          >
-            <svg className="w-8 h-8 text-[#663399]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w.org/2000/svg">
-            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
-          </svg>
-           <h1 className="text-2xl font-extrabold text-white tracking-wide">
-            KnightPool
-          </h1>
+          <Link href="/" className="flex items-start -space-x-1">
+            <img src="/favicon.png" alt="KnightPool logo" className="w-16 h-16" />
+            <h1
+              className="text-3xl font-extrabold tracking-wide text-white mt-3"
+              style={{ fontFamily: "'Uber Move Text', sans-serif" }}
+            >
+              KnightPool
+            </h1>
           </Link>
         </div>
 

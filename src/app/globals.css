@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -170,5 +171,12 @@ body {
   font-family: "Cal Sans", sans-serif;
   font-weight: 400;
   font-style: normal;
+}
+
+/* globals.css */
+@import url('https://fonts.cdnfonts.com/css/uber-move-text');
+
+body {
+  font-family: 'Uber Move Text', sans-serif;
 }
 

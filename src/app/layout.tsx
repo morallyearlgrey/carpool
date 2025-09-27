@@ -5,6 +5,9 @@ import Providers from "@/components/providers";
 export const metadata: Metadata = {
   title: "Knightpool",
   description: "Where carpools are made.",
+  icons: {
+    icon: '/favicon.ico', 
+  },
 };
 
 export default function RootLayout({

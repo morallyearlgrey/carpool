@@ -174,17 +174,16 @@ const DashboardPage = () => {
             </>
           )}
         </div>
-
-        {/* RIGHT COLUMN: Map */}
-        <div className="lg:col-span-1 w-full h-full rounded-md pr-5">
-          <MapComponent
-            onRouteSelected={(route) => {
-              setStart(route.start);
-              setEnd(route.end);
-            }}
-          />
-        </div>
-      </main>
+			{/* RIGHT COLUMN: Map */}
+			<div className={`lg:col-span-1 w-full h-full rounded-md pr-5 ${animationClasses('300ms')}`}>
+			<MapComponent
+				onRouteSelected={(route) => {
+				setStart(route.start);
+				setEnd(route.end);
+				}}
+			/>
+			</div>
+				</main>
     </div>
   );
 };
