@@ -47,6 +47,7 @@ const CarIcon = ({ className }: { className?: string }) => (
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
+  const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
   const [showComponent, setShowComponent] = useState(false);
 
@@ -71,6 +72,114 @@ const DashboardPage = () => {
     setRideMode(mode);
     setIsRequestOpen(true);
   };
+
+  const handleDelete = async (type: 'request' | 'offer', id: string | null) => {
+  if (!id) return alert("No ride selected to cancel");
+  if (!confirm('Are you sure you want to cancel this ride?')) return;
+
+  try {
+    const res = await fetch(`/api/${type}s/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete ride');
+
+    // Clear frontend state
+    if (type === 'request') {
+      setRequestResults(null);
+      if (currentRideId === id) setCurrentRideId(null);
+    }
+    setIsRequestOpen(false);
+    setSearchLoading(false);
+    setRideMode('request');
+  } catch (err) {
+    console.error('Failed to delete', type, id, err);
+    alert('Failed to cancel ride. Please try again.');
+  }
+};
+
+// Inside DashboardPage component
+
+const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  if (!start || !end) return alert('Please select both start and end locations.');
+
+  setSearchLoading(true);
+
+  const form = e.target as HTMLFormElement;
+  const fd = new FormData(form);
+  const date = fd.get('date') as string;
+  const startTime = fd.get('startTime') as string;
+  const finalTime = fd.get('finalTime') as string;
+
+  try {
+    if (rideMode === 'request') {
+      // POST to recommendations to see if there are matching rides
+      const res = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+          mode: 'rides',
+          date,
+          startTime,
+          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+        }),
+      });
+
+      const data = await res.json();
+      const candidates = data.candidates || [];
+      let rideId: string | null = null;
+
+      if (candidates.length > 0) {
+        // Found candidate rides → use first one as current ride
+        setRequestResults(candidates);
+        rideId = candidates[0]?._id || null;
+      } else {
+        // No matches → post publicly
+        const publicRes = await fetch('/api/requests/public', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+            beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+            finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+            date,
+            startTime,
+            finalTime,
+          }),
+        });
+
+        const publicData = await publicRes.json();
+        rideId = publicData.requestId;
+        console.log('Ride ID returned (public):', rideId);
+
+        setRequestResults([]);
+      }
+
+      // Save the ride ID for canceling
+      setCurrentRideId(rideId);
+    } else if (rideMode === 'offer') {
+      // Ride offer flow
+      await fetch('/api/offers', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+          date,
+          startTime,
+          finalTime,
+        }),
+      });
+      setRequestResults([]);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error sending request. Please try again.');
+  } finally {
+    setSearchLoading(false);
+  }
+};
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
@@ -118,162 +227,27 @@ const DashboardPage = () => {
             <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
               {/* X Close Button */}
               <button
-                onClick={async () => {
-                  if (searchLoading) {
-                    // Cancel pending request on backend if one exists
-                    try {
-                      await fetch('/api/requests/cancel', {
-                        method: 'DELETE',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({
-                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
-                        }),
-                      });
-                    } catch (err) {
-                      console.error('Cancel request failed', err);
-                    }
-                  }
-                  setIsRequestOpen(false);
-                  setRideMode('request');
-                  setSearchLoading(false);
-                  setRequestResults(null);
-                }}
+                onClick={() => handleDelete('request', currentRideId!)}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >
                 ✕
               </button>
-
               <h3 className="text-xl font-bold mb-4">
                 {rideMode === 'request' ? 'Request a Ride' : 'Offer a Ride'}
               </h3>
 
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!start || !end) return alert('Please select both start and end locations.');
-                  setSearchLoading(true);
-
-                  const form = e.target as HTMLFormElement;
-                  const fd = new FormData(form);
-                  const date = fd.get('date') as string;
-                  const startTime = fd.get('startTime') as string;
-                  const finalTime = fd.get('finalTime') as string;
-
-                  try {
-                    if (rideMode === 'request') {
-                      // 🔹 Ride Request flow
-                      const res = await fetch('/api/recommendations', {
-                        method: 'POST',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({
-                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
-                          mode: 'rides',
-                          date,
-                          startTime,
-                          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
-                          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
-                        }),
-                      });
-
-                      const data = await res.json();
-                      const candidates = data.candidates || [];
-
-                      if (candidates.length > 0) {
-                        setRequestResults(candidates);
-                      } else {
-                        // No matches → post publicly
-                        await fetch('/api/requests/public', {
-                          method: 'POST',
-                          headers: { 'content-type': 'application/json' },
-                          body: JSON.stringify({
-                            userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
-                            beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
-                            finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
-                            date,
-                            startTime,
-                            finalTime,
-                          }),
-                        });
-                        setRequestResults([]);
-                      }
-                    } else if (rideMode === 'offer') {
-                      // 🔹 Ride Offer flow
-                      await fetch('/api/offers', {
-                        method: 'POST',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({
-                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
-                          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
-                          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
-                          date,
-                          startTime,
-                          finalTime,
-                        }),
-                      });
-                      setRequestResults([]); // you might later show "Offer posted!" instead
-                    }
-                  } catch (err) {
-                    console.error(err);
-                    alert('Error sending request. Please try again.');
-                    setSearchLoading(false); // allow retry
-                  }
-                }}
-              >
-                <input
-                  name="beginAddress"
-                  value={start?.address || ''}
-                  placeholder="Start address"
-                  className="inputs mb-2"
-                  readOnly
-                />
-                <input
-                  name="finalAddress"
-                  value={end?.address || ''}
-                  placeholder="End address"
-                  className="inputs mb-2"
-                  readOnly
-                />
-                <input
-                  type="date"
-                  name="date"
-                  defaultValue={new Date().toISOString().slice(0, 10)}
-                  className="inputs mb-2"
-                />
+              <form onSubmit={handleRideSubmit}>
+                <input name="beginAddress" value={start?.address || ''} placeholder="Start address" readOnly className="inputs mb-2" />
+                <input name="finalAddress" value={end?.address || ''} placeholder="End address" readOnly className="inputs mb-2" />
+                <input type="date" name="date" defaultValue={new Date().toISOString().slice(0, 10)} className="inputs mb-2" />
                 <input name="startTime" placeholder="08:30" className="inputs mb-2" />
                 <input name="finalTime" placeholder="09:00" className="inputs mb-2" />
-
-                {/* Action Buttons / Loader */}
-                {!searchLoading ? (
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsRequestOpen(false);
-                        setRideMode('request');
-                      }}
-                      className="px-4 py-2 border rounded"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded"
-                    >
-                      {rideMode === 'request' ? 'Request' : 'Offer'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-6 flex flex-col items-center gap-2">
-                    <span className="text-purple-700 font-medium">
-                      {rideMode === 'request' ? 'Searching...' : 'Posting...'}
-                    </span>
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-2 bg-purple-600 animate-pulse w-1/2"></div>
-                    </div>
-                  </div>
-                )}
+                
+                {/* Submit button */}
+                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">
+                  {rideMode === 'request' ? 'Request' : 'Offer'}
+                </button>
               </form>
-
 
               {/* Results Section */}
               {requestResults && requestResults.length === 0 && (
