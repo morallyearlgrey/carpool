@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     email: {type: String, required: true},
+    password: { type: String, required: true }, // Added missing password
     firstName: {type: String, required: true},
     lastName: {type: String, required: true},
 
@@ -22,7 +23,9 @@ const userSchema = new mongoose.Schema({
     age: {type: Number},
     gender: {type: String},
 
-})
+}, {
+    timestamps: true // This automatically manages createdAt and updatedAt
+});
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 

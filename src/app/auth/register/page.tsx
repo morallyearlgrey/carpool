@@ -181,7 +181,7 @@ export default function RegisterPage() {
                         <FormItem>
                             <FormLabel>Age</FormLabel>
                                 <FormControl>
-                                    <Input type="number" min="0" max="100" placeholder="0" {...field} />
+                                    <Input type="number" min="0" max="100" placeholder="0" {...field} onChange={(e) => field.onChange(Number(e.target.value))}/>
                                     </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -245,7 +245,7 @@ export default function RegisterPage() {
                             <FormItem>
                             <FormLabel>Seats Available</FormLabel>
                             <FormControl>
-                                <Input type="number" min={1} {...field} />
+                                <Input type="number" min={1} {...field} onChange={(e) => field.onChange(Number(e.target.value))}/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>
