@@ -34,7 +34,7 @@ const DashboardPage = () => {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-[#E2D6FF] to-[#D0B8FF] p-6 lg:p-10 text-gray-800 font-sans"
+      className="min-h-screen bg-gradient-to-br p-6 lg:p-10 text-gray-800 font-sans"
       // style={{backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`}}
     >
       <header className={`flex justify-between items-center bg-white bg-opacity-40 rounded-lg p-4 mb-8 shadow-lg shadow-purple-500/10 backdrop-blur-lg ${animationClasses('0ms')}`}>
@@ -65,13 +65,13 @@ const DashboardPage = () => {
         </div>
 
         <div className={`lg:col-span-1 flex flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
-          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto">
+          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
             <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
               <PlusCircleIcon className="w-8 h-8 transition-transform duration-300 group-hover:rotate-90" />
               Request a Ride
             </span>
           </button>
-          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto">
+          <button className="group w-52 h-52 flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
             <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
               <CarIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
               Offer a Ride
