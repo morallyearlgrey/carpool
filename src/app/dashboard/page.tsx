@@ -32,9 +32,10 @@ const DashboardPage = () => {
   // State to trigger the animation after the component mounts
   const [isMounted, setIsMounted] = useState<boolean>(false);
   // Request modal state
-  const [isRequestOpen, setIsRequestOpen] = useState(false);
+	const [activeForm, setActiveForm] = useState<'request' | 'offer' | 'none'>('none');
   const [searchLoading, setSearchLoading] = useState(false);
   const [requestResults, setRequestResults] = useState<any[] | null>(null);
+  const [offerResults, setOfferResults] = useState<any[] | null>(null);
   const [selectedRoute, setSelectedRoute] = useState(null);
   useEffect(() => {
     // Set a short timeout to allow the component to render before transitioning
@@ -73,14 +74,13 @@ const DashboardPage = () => {
             </div>
           </div>
         </div>
-
 				{/* MIDDLE COLUMN */}
 				<div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
-					{isRequestOpen ? (
-						// 1. Form is now inside a styled container that matches the other cards
-						// 2. The `flex-grow` class makes it expand to fill the column height
+
+					{/* Renders the "Request a Ride" form if activeForm is 'request' */}
+					{activeForm === 'request' ? (
 						<div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
-							<h3 className="text-xl font-bold mb-4">Request a Ride</h3>
+							<h3 className="text-xl font-bold text-[#3a3a5a] mb-4">Request a Ride</h3>
 							<form onSubmit={async (e) => {
 								e.preventDefault();
 								setSearchLoading(true);
@@ -93,7 +93,6 @@ const DashboardPage = () => {
 								const date = fd.get('date') as string;
 								const startTime = fd.get('startTime') as string;
 								const finalTime = fd.get('finalTime') as string;
-
 								try {
 									const res = await fetch('/api/recommendations', {
 										method: 'POST',
@@ -128,30 +127,66 @@ const DashboardPage = () => {
 								<input name="startTime" placeholder="08:30" className="inputs mt-2" />
 								<input name="finalTime" placeholder="09:00" className="inputs mt-2" />
 								<div className="flex justify-end gap-2 mt-4">
-									<button type="button" onClick={() => setIsRequestOpen(false)} className="px-4 py-2 border rounded">Cancel</button>
+									<button type="button" onClick={() => setActiveForm('none')} className="px-4 py-2 border rounded">Cancel</button>
 									<button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">{searchLoading ? 'Searching...' : 'Search'}</button>
 								</div>
 							</form>
-
+							
+							{/* Logic to display request results */}
 							{requestResults && requestResults.length > 0 && (
 								<div className="mt-4">
-									{/* Results rendering */}
+									{/* Your results rendering logic here */}
 								</div>
 							)}
 							{requestResults && requestResults.length === 0 && (
 								<div className="mt-4 text-sm text-gray-600">No matches found...</div>
 							)}
 						</div>
+
+					/* Renders the "Offer a Ride" form if activeForm is 'offer' */
+					) : activeForm === 'offer' ? (
+						<div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
+							<h3 className="text-xl font-bold text-[#3a3a5a] mb-4">Offer a Ride</h3>
+							<form onSubmit={async (e) => {
+								e.preventDefault();
+								// TODO: Implement the API call to your backend to create a new ride offer.
+								// Example:
+								// const form = e.target as HTMLFormElement;
+								// const fd = new FormData(form);
+								// await fetch('/api/rides/offer', {
+								//   method: 'POST',
+								//   headers: { 'content-type': 'application/json' },
+								//   body: JSON.stringify({ ...Object.fromEntries(fd.entries()), driverId: session.user.id }),
+								// });
+								alert('Ride offer submitted successfully!');
+								setActiveForm('none'); // Go back to buttons after submission
+							}}>
+								<div className="grid grid-cols-2 gap-2">
+									<input name="beginLat" required placeholder="Starting latitude" className="inputs" />
+									<input name="beginLong" required placeholder="Starting longitude" className="inputs" />
+									<input name="finalLat" required placeholder="Ending latitude" className="inputs" />
+									<input name="finalLong" required placeholder="Ending longitude" className="inputs" />
+								</div>
+								<input type="date" name="date" defaultValue={new Date().toISOString().slice(0,10)} className="inputs mt-2" />
+								<input name="startTime" placeholder="Departure time (e.g., 08:30)" className="inputs mt-2" />
+								<input name="finalTime" placeholder="Arrival time (e.g., 09:00)" className="inputs mt-2" />
+								<div className="flex justify-end gap-2 mt-4">
+									<button type="button" onClick={() => setActiveForm('none')} className="px-4 py-2 border rounded">Cancel</button>
+									<button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">Create Offer</button>
+								</div>
+							</form>
+						</div>
+
+					/* Renders the buttons if no form is active */
 					) : (
 						<>
-							{/* BUTTONS FOR MIDDLE COLUMN */}
-							<button onClick={() => { setIsRequestOpen(true); setRequestResults(null); }} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+							<button onClick={() => { setActiveForm('request'); setRequestResults(null); }} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
 								<span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
 									<PlusCircleIcon className="w-8 h-8 transition-transform duration-300 group-hover:rotate-90" />
 									Request a Ride
 								</span>
 							</button>
-							<button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+							<button onClick={() => { setActiveForm('offer'); }} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
 								<span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
 									<CarIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
 									Offer a Ride
