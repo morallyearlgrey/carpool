@@ -4,6 +4,7 @@ import User from "@/lib/models/user";
 import Schedule from "@/lib/models/schedule";
 import Ride from "@/lib/models/ride";
 import RequestModel from "@/lib/models/request";
+import mongooseConnect from '@/lib/mongoose';
 
 // Simple Haversine distance in kilometers
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -18,6 +19,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function POST(req: NextRequest) {
   try {
+    await mongooseConnect;
     const body = await req.json();
 
     const { userId, date, startTime, beginLocation, finalLocation, mode } = body;

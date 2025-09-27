@@ -25,7 +25,7 @@ interface DiamondButtonProps {
     id: string;
     label: string;
     onClick: () => void;
-    icon: JSX.Element;
+    icon: React.ReactNode;
 }
 
 // Main App Component

@@ -30,18 +30,31 @@ export default function ManualSchedulePage(){
         setSaving(true);
         setMessage(null);
         try {
-            const userId = (session as any)?.user?.id;
-            if (!userId) throw new Error('not authenticated');
+            if (!(session as any)?.user?.id) {
+                setMessage('You must be signed in to save a schedule');
+                return;
+            }
+
+            // build availableTimes payload; use placeholder coords if no addresses provided
+            const payloadTimes = slots.map(s => ({
+                day: s.day,
+                startTime: s.startTime,
+                endTime: s.endTime,
+                beginLocation: { lat: 0, long: 0 },
+                finalLocation: { lat: 0, long: 0 }
+            }));
 
             const res = await fetch('/api/schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, availableTimes: slots.map(s => ({ day: s.day, startTime: s.startTime, endTime: s.endTime, // locations will be filled later
-                    beginLocation: { lat: 0, long: 0 }, finalLocation: { lat: 0, long: 0 } })) })
+                body: JSON.stringify({ availableTimes: payloadTimes })
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || 'save failed');
-            setMessage('Schedule saved');
+            if (!res.ok) {
+                setMessage('Save failed: ' + (data?.error || 'unknown error'));
+            } else {
+                setMessage('Schedule saved');
+            }
         } catch (err: any) {
             console.error(err);
             setMessage('Failed to save schedule: ' + (err.message || String(err)));

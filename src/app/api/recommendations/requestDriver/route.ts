@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Ride from "@/lib/models/ride";
 import RequestModel from "@/lib/models/request";
 import User from "@/lib/models/user";
+import mongooseConnect from '@/lib/mongoose';
 
 export async function POST(req: NextRequest) {
   try {
+    await mongooseConnect;
     const { riderId, rideId, driverId, beginLocation, finalLocation, date, startTime, finalTime } = await req.json();
     if (!riderId || !beginLocation || !finalLocation || !date || !startTime || !finalTime) {
       return NextResponse.json({ error: 'missing required fields' }, { status: 400 });

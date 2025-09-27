@@ -29,7 +29,7 @@ const DashboardPage = () => {
   const { data: session, status } = useSession();
     const isLoggedIn = status === "authenticated";
   // State to trigger the animation after the component mounts
-  const [isMounted, setIsMounted] = useState('dashboard');
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   // Request modal state
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
