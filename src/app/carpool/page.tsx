@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 // Main App component
 export default function App() {
   // State to manage the selected gender ('F', 'M', or null)
-  const [selectedGender, setSelectedGender] = useState(null);
+  const [selectedGender, setSelectedGender] = useState<null | 'F' | 'M'>(null);
 
   /**
    * Handles the click event for the gender selection buttons.
@@ -13,7 +13,7 @@ export default function App() {
    * Otherwise, it sets the new gender as selected.
    * @param {'F' | 'M'} gender - The gender to be selected.
    */
-  const handleGenderSelect = (gender) => {
+  const handleGenderSelect = (gender: 'F' | 'M') => {
     if (selectedGender === gender) {
       setSelectedGender(null); // Deselect if already selected
     } else {

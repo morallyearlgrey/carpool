@@ -4,6 +4,7 @@ import User from "@/lib/models/user";
 import Schedule from "@/lib/models/schedule";
 import Ride from "@/lib/models/ride";
 import RequestModel from "@/lib/models/request";
+import mongooseConnect from '@/lib/mongoose';
 
 // Simple Haversine distance in kilometers
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -18,22 +19,28 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function POST(req: NextRequest) {
   try {
+    await mongooseConnect;
     const body = await req.json();
 
-    const { userId, date, startTime, beginLocation, finalLocation } = body;
+    const { userId, date, startTime, beginLocation, finalLocation, mode } = body;
 
-    if (!userId || !date || !startTime || !beginLocation || !finalLocation) {
+    if (!userId || !date || !startTime || !beginLocation || !finalLocation || !mode) {
       return NextResponse.json({ error: 'missing required fields' }, { status: 400 });
+    }
+
+    if (mode !== 'rides' && mode !== 'schedules') {
+      return NextResponse.json({ error: "invalid mode; must be 'rides' or 'schedules'" }, { status: 400 });
     }
 
     // Parse date to start-of-day to match schedules/rides
     const queryDate = new Date(date);
 
-    // Find all rides for the given date (drivers offering rides)
-    const rides = await Ride.find({ date: { $eq: queryDate } }).populate('driver').lean();
 
-    // Also consider users with schedules on that day
-    const schedules = await Schedule.find({}).populate('user').lean();
+  // Find all rides for the given date (drivers offering rides) — only if mode includes rides
+    const rides = (mode === 'rides') ? await Ride.find({ date: { $eq: queryDate } }).populate('driver').lean() : [];
+
+  // Also consider users with schedules on that day — only if mode === 'schedules'
+  const schedules = (mode === 'schedules') ? await Schedule.find({}).populate('user').lean() : [];
 
     const candidates: any[] = [];
 
@@ -70,41 +77,65 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // simple schedule-based candidates: users who are available on that weekday and time
+    // schedule-based candidates: iterate each availableTime for weekday
     const weekday = queryDate.toLocaleDateString('en-US', { weekday: 'long' });
-  for (const sched of schedules as any[]) {
+    for (const sched of schedules as any[]) {
       if (!sched.availableTimes) continue;
-      const matching = sched.availableTimes.find((a: any) => a.day === weekday);
-      if (!matching) continue;
+      for (const slot of sched.availableTimes as any[]) {
+        if (slot.day !== weekday) continue;
 
-      // check time overlap
-      const start = toMinutes(startTime);
-      const availStart = toMinutes(matching.startTime);
-      const availEnd = toMinutes(matching.endTime);
-      if (start < availStart - 60 || start > availEnd + 60) continue; // allow 1-hour slack
+        // compute time overlap and allow 1 hour slack
+        const start = toMinutes(startTime);
+        const availStart = toMinutes(slot.startTime);
+        const availEnd = toMinutes(slot.endTime);
+        const slack = 60; // minutes
+        if (start < availStart - slack || start > availEnd + slack) continue;
 
-      // try to approximate route by looking at user's current rides if any
-  const user: any = await User.findById(sched.user).lean();
-      if (!user) continue;
+        const user: any = await User.findById(sched.user).lean();
+        if (!user) continue;
 
-      // placeholder distances: attempt to use user's currentRide or last ride
-      let distStart = 1000;
-      if (user.currentRide) {
-        const r: any = await Ride.findById(user.currentRide).lean();
-        if (r?.beginLocation) {
-          distStart = haversineDistance(beginLocation.lat, beginLocation.long, r.beginLocation.lat, r.beginLocation.long);
+        // estimate driver's route endpoints: prefer slot's begin/final locations, else fallback to currentRide
+        let estBegin: any = slot.beginLocation ?? null;
+        let estEnd: any = slot.finalLocation ?? null;
+        let seatsLeft = user?.vehicleInfo?.seatsAvailable ?? null;
+        if ((!estBegin || !estEnd) && user.currentRide) {
+          const r: any = await Ride.findById(user.currentRide).lean();
+          if (r) {
+            if (!estBegin && r.beginLocation) estBegin = r.beginLocation;
+            if (!estEnd && r.finalLocation) estEnd = r.finalLocation;
+            seatsLeft = (r.maxRiders ?? 0) - ((r.riders?.length) ?? 0);
+          }
         }
+
+        // compute distance from rider start to estimated driver start
+        let distStart = 1000;
+        if (estBegin) {
+          distStart = haversineDistance(beginLocation.lat, beginLocation.long, estBegin.lat, estBegin.long);
+        }
+
+        // estimate end-time: use slot.endTime if available
+        const estEndTime = slot.endTime || slot.startTime;
+
+        // score favors geographic closeness and earlier overlap
+        const timeProx = 1 / (1 + Math.abs(start - availStart));
+        const distScore = 1 / (1 + distStart);
+        const seatsScore = seatsLeft != null ? Math.min(1, seatsLeft / 4) : 0.2;
+
+        const score = distScore * 0.6 + timeProx * 0.3 + seatsScore * 0.1;
+
+        candidates.push({
+          id: sched._id + '-' + slot.startTime,
+          type: 'driver_schedule',
+          driver: user,
+          startTime: slot.startTime,
+          endTime: estEndTime,
+          beginLocation: estBegin,
+          finalLocation: estEnd,
+          seatsLeft,
+          distStart,
+          score
+        });
       }
-
-      const score = (1 / (1 + distStart)) * 0.7 + (1 / (1 + Math.abs(start - toMinutes(matching.startTime)))) * 0.3;
-
-      candidates.push({
-        type: 'driver_schedule',
-        driver: user,
-        schedule: sched,
-        distStart,
-        score
-      });
     }
 
     // sort by score descending

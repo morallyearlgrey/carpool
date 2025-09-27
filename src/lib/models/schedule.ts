@@ -4,7 +4,12 @@ const AvailableTimeSchema = new mongoose.Schema({
   day: { type: String, required: true },
   startTime: { type: String, required: true }, 
   endTime: { type: String, required: true },
-  location: {
+  // start and end locations for the availability slot (required)
+  beginLocation: {
+    lat: { type: Number, required: true },
+    long: { type: Number, required: true }
+  },
+  finalLocation: {
     lat: { type: Number, required: true },
     long: { type: Number, required: true }
   },
