@@ -130,14 +130,16 @@ const DashboardPage = () => {
         rideId = publicData.requestId;
         setRequestResults([]);
       }
-
+      alert("Your ride request has been submitted successfully!");
       setCurrentRideId(rideId);
+
     } catch (err) {
       console.error(err);
       alert('Error sending request. Please try again.');
     } finally {
       setSearchLoading(false);
     }
+    setIsRequestOpen(false)
   };
 
   // Handle submitting a ride offer
@@ -175,6 +177,8 @@ const DashboardPage = () => {
     } finally {
       setSearchLoading(false);
     }
+    alert("Your offer has been successfully posted!")
+    setIsRequestOpen(false)
   };
 
 
@@ -196,12 +200,7 @@ const DashboardPage = () => {
               {/* X Close Button */}
               <button
                 onClick={() => {
-                  if (currentRideId) {
-                    if (rideMode === 'request') handleRequestDelete(currentRideId);
-                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
-                  } else {
-                    setIsRequestOpen(false);
-                  }
+                  setIsRequestOpen(false)
                 }}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >
