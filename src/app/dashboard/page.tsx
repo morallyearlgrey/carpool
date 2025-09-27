@@ -55,7 +55,7 @@ const DashboardPage = () => {
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [rideMode, setRideMode] = useState<'request' | 'offer'>('request'); // track which button was clicked
   const [searchLoading, setSearchLoading] = useState(false);
-  const [requestResults, setRequestResults] = useState<any[] | null>(null);
+  const [requestResults, setRequestResults] = useState<Array<Record<string, unknown>> | null>(null);
 
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
@@ -65,7 +65,7 @@ const DashboardPage = () => {
     setShowComponent(true);
   }, []);
 
-  const animationClasses = (delay: string) =>
+  const animationClasses = () =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   const handleOpenRideForm = (mode: 'request' | 'offer') => {
@@ -133,6 +133,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
           mode: 'rides',
           date,
@@ -155,6 +156,7 @@ const DashboardPage = () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
             beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
             finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
@@ -195,6 +197,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
           beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
           finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
@@ -222,7 +225,7 @@ const DashboardPage = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* LEFT COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
+        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses()}`}>
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
             <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
               <BellIcon className="text-[#3a3a5a]" /> Upcoming Rides
@@ -239,6 +242,7 @@ const DashboardPage = () => {
             <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
               {isLoggedIn ? (
                 <RecommendedRides
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''}
                   request={{
                     date: new Date().toISOString(),
@@ -256,7 +260,7 @@ const DashboardPage = () => {
         </div>
 
         {/* MIDDLE COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
+        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses()}`}>
           {isRequestOpen ? (
             <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
               {/* X Close Button */}
@@ -367,7 +371,7 @@ const DashboardPage = () => {
 
 
         {/* RIGHT COLUMN: Map */}
-        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
+        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses()}`}>
           {showComponent ? (<MapComponent
             onRouteSelected={(route) => {
               setStart(route.start);

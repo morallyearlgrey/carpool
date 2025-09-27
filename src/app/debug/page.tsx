@@ -1,16 +1,15 @@
 'use client';
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Request {
   _id: string;
-  user: string;
+  userId: string;
   beginLocation: { lat: number; long: number };
   finalLocation: { lat: number; long: number };
   date: string;
   startTime: string;
   finalTime: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface Offer {
@@ -21,7 +20,7 @@ interface Offer {
   date: string;
   startTime: string;
   finalTime: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const DebugPage = () => {

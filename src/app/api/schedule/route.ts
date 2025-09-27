@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import clientPromise from '@/lib/mongodb';
 import mongooseConnect from '@/lib/mongoose';
 import Schedule from '@/lib/models/schedule';
@@ -16,7 +15,9 @@ export async function POST(req: NextRequest) {
   const { availableTimes } = body;
 
     // authenticate server-side and derive userId from session
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session as any)?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: 'not authenticated' }, { status: 401 });
@@ -56,9 +57,8 @@ export async function POST(req: NextRequest) {
     const created = await Schedule.create({ user: userId, availableTimes });
     await User.findByIdAndUpdate(userId, { schedule: created._id });
     return NextResponse.json({ ok: true, schedule: created });
-  } catch (err: any) {
-    console.error('Error in /api/schedule:', err?.message || err, err?.stack ? err.stack.split('\n').slice(0,3).join('\n') : undefined);
-    const detail = process.env.NODE_ENV === 'production' ? 'server error' : (err?.message || String(err));
-    return NextResponse.json({ error: detail }, { status: 500 });
+  } catch (err: unknown) {
+    console.error(err);
+    return NextResponse.json({ error: 'server error' }, { status: 500 });
   }
 }

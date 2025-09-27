@@ -7,8 +7,8 @@ import { useSession } from "next-auth/react";
 
 const words = ["Smarter", "Faster", "Greener", "Connected"];
 
-const HomePage: React.FC = () => {
-  const { data: session, status } = useSession();
+export default function Home() {
+  const { status } = useSession();
   const isLoggedIn = status === "authenticated";
 
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -119,6 +119,4 @@ const HomePage: React.FC = () => {
       </footer>
     </div>
   );
-};
-
-export default HomePage;
+}

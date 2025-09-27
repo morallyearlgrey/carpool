@@ -30,7 +30,13 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
       <div className="relative flex items-center justify-between h-30 w-full px-6">
         <div className="flex justify-start">
           <Link href="/" className="flex items-start -space-x-1">
-            <img src="/favicon.png" alt="KnightPool logo" className="w-16 h-16" />
+            <Image 
+              src="/favicon.png" 
+              alt="KnightPool logo" 
+              width={64} 
+              height={64} 
+              className="w-16 h-16" 
+            />
             <h1
               className="text-3xl font-extrabold tracking-wide text-white mt-3"
               style={{ fontFamily: "'Uber Move Text', sans-serif" }}

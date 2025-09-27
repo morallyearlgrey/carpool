@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/navbar';
 // For address autocompletion
-import { APIProvider } from '@vis.gl/react-google-maps';
 import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 type DayName = 'Monday'|'Tuesday'|'Wednesday'|'Thursday'|'Friday'|'Saturday'|'Sunday';
@@ -43,6 +42,7 @@ export default function ManualSchedulePage(){
                     // Convert the analyzed schedule to the format expected by the form
                     const newSlots = weekdays.map(day => {
                         // Find matching day in analyzed schedule
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const matchingTime = parsedSchedule.availableTimes.find((time: any) => 
                             time.day.toLowerCase() === day.toLowerCase()
                         );
@@ -93,6 +93,7 @@ export default function ManualSchedulePage(){
 		setSaving(true);
 		setMessage(null);
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			if (!(session as any)?.user?.id) {
 				setMessage('You must be signed in to save a schedule');
 				return;
@@ -118,9 +119,9 @@ export default function ManualSchedulePage(){
 			} else {
 				setMessage('Schedule saved');
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
-			setMessage('Failed to save schedule: ' + (err.message || String(err)));
+			setMessage('Failed to save schedule: ' + (err instanceof Error ? err.message : String(err)));
 		} finally {
 			setSaving(false);
 		}

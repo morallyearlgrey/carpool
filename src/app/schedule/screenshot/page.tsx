@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Upload, Camera, X, Loader2, FileImage } from 'lucide-react';
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -7,7 +8,7 @@ import { Navbar } from "@/components/navbar";
 import { useSession } from 'next-auth/react';
 
 export default function Screenshot() {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
         const isLoggedIn = status === 'authenticated';
 
     const [selectedImage, setSelectedImage] = useState<File | null>(null); // holds image
@@ -158,24 +159,28 @@ Return **ONLY JSON** with \`availableTimes\` for the schedule in the uploaded im
                 throw new Error(`Invalid response structure. Expected success=true and schedule data. Got: ${JSON.stringify(result)}`);
             }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            const errorStack = err instanceof Error ? err.stack : 'No stack trace';
+            const errorName = err instanceof Error ? err.name : 'Unknown error type';
+            
             console.error('FULL ERROR HER ELOOK HERE OML Full error details:', {
-                message: err.message,
-                stack: err.stack,
-                name: err.name
+                message: errorMessage,
+                stack: errorStack,
+                name: errorName
             });
             
             // More specific error messages
-            if (err.message?.includes('Failed to fetch')) {
+            if (errorMessage?.includes('Failed to fetch')) {
                 setError('Network error. Please check your connection and try again.');
-            } else if (err.message?.includes('Authentication')) {
+            } else if (errorMessage?.includes('Authentication')) {
                 setError('Please sign in to analyze images.');
-            } else if (err.message?.includes('quota') || err.message?.includes('limit')) {
+            } else if (errorMessage?.includes('quota') || errorMessage?.includes('limit')) {
                 setError('API quota exceeded. Please try again later.');
-            } else if (err.message?.includes('safety') || err.message?.includes('blocked')) {
+            } else if (errorMessage?.includes('safety') || errorMessage?.includes('blocked')) {
                 setError('Image content was flagged by safety filters. Please try a different image.');
             } else {
-                setError(err.message || 'Failed to analyze image. Please try again.');
+                setError(errorMessage || 'Failed to analyze image. Please try again.');
             }
         } finally {
             setIsAnalyzing(false);
@@ -203,9 +208,11 @@ Return **ONLY JSON** with \`availableTimes\` for the schedule in the uploaded im
                     {previewUrl ? (
                         <div className="space-y-4">
                             <div className="relative inline-block">
-                                <img 
+                                <Image 
                                     src={previewUrl} 
                                     alt="Selected schedule" 
+                                    width={400}
+                                    height={300}
                                     className="max-w-full max-h-64 rounded-lg shadow-md"
                                 />
                                 <button
