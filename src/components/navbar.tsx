@@ -13,9 +13,10 @@ const routes: { title: string; href: string }[] = [
 
 interface NavbarProps {
   isLoggedIn: boolean;
+  className?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -23,7 +24,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn }) => {
   const profilePhoto = "/grimace.jpg";
 
   return (
-    <div className="relative w-full z-20">
+    <div className={`relative w-full z-20 ${className || ''}`}>
       <div className="absolute inset-0 h-28 bg-gradient-to-b from-[#402B52]/90 to-transparent pointer-events-none" />
 
       <div className="relative flex items-center justify-between h-30 w-full px-6">
