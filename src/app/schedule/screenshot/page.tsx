@@ -2,8 +2,14 @@
 import React, { useState } from 'react';
 import { Upload, Camera, X, Loader2, FileImage } from 'lucide-react';
 import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/navbar";
+
+import { useSession } from 'next-auth/react';
 
 export default function Screenshot() {
+    const { data: session, status } = useSession();
+        const isLoggedIn = status === 'authenticated';
+
     const [selectedImage, setSelectedImage] = useState<File | null>(null); // holds image
     const [previewUrl, setPreviewUrl] = useState('');
     const [error, setError] = useState("");
@@ -177,7 +183,9 @@ Return **ONLY JSON** with \`availableTimes\` for the schedule in the uploaded im
     }
 
     return (
-        <div className="min-h-screen bg-[#F9F5FF] p-6">
+        <div className="min-h-screen bg-[#F9F5FF] ">
+            			<Navbar isLoggedIn={isLoggedIn} />
+
             <div className="max-w-2xl mx-auto">
                 <h1 className="text-3xl font-bold text-center mb-8">Upload Your Schedule</h1>
                 
