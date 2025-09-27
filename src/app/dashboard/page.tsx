@@ -23,7 +23,7 @@ const CarIcon = ({ className }: { className?: string }) => (
 
 const DashboardPage = () => {
   // State to trigger the animation after the component mounts
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState('dashboard');
   useEffect(() => {
     // Set a short timeout to allow the component to render before transitioning
     const timer = setTimeout(() => setIsMounted(true), 100);
