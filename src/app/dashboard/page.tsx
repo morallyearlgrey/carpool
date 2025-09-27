@@ -2,22 +2,46 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import MapComponent from '@/components/MapComponent';
+import dynamic from 'next/dynamic';
 import RecommendedRides from '@/components/RecommendedRides';
 import { Navbar } from '@/components/navbar';
 
+// Dynamically import MapComponent so it only renders on the client
+const MapComponent = dynamic(() => import('@/components/MapComponent'), { ssr: false });
+
 // --- SVG Icons ---
 const BellIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  </svg>
 );
+
 const RouteIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H13" /><circle cx="18" cy="5" r="3" /></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="6" cy="19" r="3" />
+    <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H13" />
+    <circle cx="18" cy="5" r="3" />
+  </svg>
 );
+
 const PlusCircleIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 12h8" />
+    <path d="M12 8v8" />
+  </svg>
 );
+
 const CarIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10H8c0 0-2.7.6-4.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" /><path d="M7 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M17 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M5 11v-4c0-.6.4-1 1-1h12c.6 0 1 .4 1 1v4" /><path d="m2 11 3-3" /><path d="m22 11-3-3" /></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10H8c0 0-2.7.6-4.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2" />
+    <path d="M7 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+    <path d="M17 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+    <path d="M5 11v-4c0-.6.4-1 1-1h12c.6 0 1 .4 1 1v4" />
+    <path d="m2 11 3-3" />
+    <path d="m22 11-3-3" />
+  </svg>
 );
 
 const DashboardPage = () => {
@@ -34,15 +58,13 @@ const DashboardPage = () => {
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100);
-    return () => clearTimeout(timer);
+    setIsMounted(true); // fade in animations
   }, []);
 
   const animationClasses = (delay: string) =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   const handleRequestRide = () => {
-    // Autofill inputs with addresses but backend will still use Lat/Lng
     setIsRequestOpen(true);
   };
 
@@ -61,6 +83,7 @@ const DashboardPage = () => {
               <p className="text-gray-600 text-lg">No upcoming rides scheduled.</p>
             </div>
           </div>
+
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
             <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
               <RouteIcon className="text-[#3a3a5a]" /> Suggested Rides
@@ -174,16 +197,17 @@ const DashboardPage = () => {
             </>
           )}
         </div>
-			{/* RIGHT COLUMN: Map */}
-			<div className={`lg:col-span-1 w-full h-full rounded-md pr-5 ${animationClasses('300ms')}`}>
-			<MapComponent
-				onRouteSelected={(route) => {
-				setStart(route.start);
-				setEnd(route.end);
-				}}
-			/>
-			</div>
-				</main>
+
+        {/* RIGHT COLUMN: Map */}
+        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
+          <MapComponent
+            onRouteSelected={(route) => {
+              setStart(route.start);
+              setEnd(route.end);
+            }}
+          />
+        </div>
+      </main>
     </div>
   );
 };
