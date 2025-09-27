@@ -55,13 +55,13 @@ const DashboardPage = () => {
         
         <div className={`lg:col-span-1 flex flex-col gap-8 ${animationClasses('100ms')}`}>
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
-            <h2 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2"><BellIcon className="text-purple-600"/> Upcoming Rides</h2>
+            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2"><BellIcon className="text-[#3a3a5a]"/> Upcoming Rides</h2>
             <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex items-center justify-center p-4">
               <p className="text-gray-600 text-lg">No upcoming rides scheduled.</p>
             </div>
           </div>
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
-            <h2 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2"><RouteIcon className="text-purple-600"/> Suggested Rides</h2>
+            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2"><RouteIcon className="text-[#3a3a5a]"/> Suggested Rides</h2>
             <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
               {/* Show schedule-based recommendations automatically when logged in */}
               {isLoggedIn ? (
@@ -176,7 +176,7 @@ const DashboardPage = () => {
         )}
 
         <div className={`lg:col-span-1 bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex flex-col items-center ${animationClasses('300ms')}`}>
-          <h2 className="text-2xl font-bold text-purple-800 mb-6 w-full text-center flex items-center justify-center gap-2"><UserIcon className="text-purple-600"/> Profile</h2>
+          <h2 className="text-2xl font-bold text-[#3a3a5a] mb-6 w-full text-center flex items-center justify-center gap-2"><UserIcon className="text-[#3a3a5a]"/> Profile</h2>
           <div className="w-32 h-32 bg-gray-200 rounded-lg mb-6 flex items-center justify-center text-gray-500 text-sm overflow-hidden shadow-inner">
             <UserIcon className="w-16 h-16 text-gray-400"/>
           </div>

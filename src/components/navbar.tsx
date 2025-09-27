@@ -35,7 +35,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn }) => {
             <svg className="w-8 h-8 text-[#663399]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w.org/2000/svg">
             <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
           </svg>
-           <h1 className="text-2xl font-extrabold text-[#663399] tracking-wide">
+           <h1 className="text-2xl font-extrabold text-white tracking-wide">
             KnightPool
           </h1>
           </Link>
@@ -52,7 +52,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn }) => {
                 key={index}
                 href={route.href}
                 className={`relative flex items-center px-4 py-2 text-white text-base rounded-sm transition-all duration-500 ${
-                  isSpecial ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-[#663399] transition whitespace-nowrap" : "hover:text-[#663399]"
+                  isSpecial ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#3a3a5a] hover:bg-[#3a3a5a] transition whitespace-nowrap" : "hover:text-[#3a3a5a]"
                 }`}
               >
                 {route.title}
