@@ -28,14 +28,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
     directionsRenderer.setMap(googleMap);
     directionsRendererRef.current = directionsRenderer;
 
+    const geocoder = new google.maps.Geocoder();
+
     // Info box for drive time & distance
     const infoBox = document.createElement('div');
     infoBox.className =
       'bg-white p-4 rounded-xl shadow-lg font-bold text-gray-800 text-lg min-w-[150px] text-center';
     googleMap.controls[google.maps.ControlPosition.TOP_LEFT].push(infoBox);
     infoBoxRef.current = infoBox;
-
-    const geocoder = new google.maps.Geocoder();
 
     const updateInfoBox = (directions?: google.maps.DirectionsResult) => {
       if (!infoBoxRef.current) return;
@@ -45,6 +45,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       }
       const leg = directions.routes[0].legs[0];
       infoBoxRef.current.innerText = `${leg.duration?.text} (${leg.distance?.text})`;
+    };
+
+    const updateInputFromMarker = (marker: google.maps.Marker, label: 'Start' | 'End') => {
+      geocoder.geocode({ location: marker.getPosition()! }, (results) => {
+        const address = results?.[0]?.formatted_address || marker.getPosition()!.toUrlValue();
+        if (label === 'Start') setStartInput(address);
+        else setEndInput(address);
+      });
     };
 
     const drawRoute = (start: google.maps.LatLng, end: google.maps.LatLng) => {
@@ -74,24 +82,19 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         draggable: true,
       });
 
+      // Update input on drag
       marker.addListener('dragend', () => {
-        // Update input box for this marker
-        if (label === 'Start') setStartInput(marker.getPosition()!.toUrlValue());
-        else setEndInput(marker.getPosition()!.toUrlValue());
-
-        // Re-draw route if both markers exist
+        updateInputFromMarker(marker, label);
         if (markersRef.current.length === 2) {
           drawRoute(markersRef.current[0].getPosition()!, markersRef.current[1].getPosition()!);
         }
       });
 
       markersRef.current.push(marker);
+      updateInputFromMarker(marker, label);
 
       if (markersRef.current.length === 2) {
         drawRoute(markersRef.current[0].getPosition()!, markersRef.current[1].getPosition()!);
-      } else {
-        // Update input box for first marker
-        if (label === 'Start') setStartInput(marker.getPosition()!.toUrlValue());
       }
     };
 
@@ -113,7 +116,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       addMarker(e.latLng, label);
     });
 
-    // Setup Places Autocomplete
+    // Autocomplete inputs
     const startInputEl = document.getElementById('start-input') as HTMLInputElement;
     const endInputEl = document.getElementById('end-input') as HTMLInputElement;
 
@@ -122,14 +125,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       autocompleteStart.addListener('place_changed', () => {
         const place = autocompleteStart.getPlace();
         if (!place.geometry) return;
-
-        if (markersRef.current[0]) {
-          markersRef.current[0].setMap(null);
-          markersRef.current.shift();
-        }
-
+        if (markersRef.current[0]) markersRef.current[0].setMap(null), markersRef.current.shift();
         addMarker(place.geometry.location, 'Start');
-        setStartInput(place.formatted_address || place.geometry.location.toUrlValue());
       });
     }
 
@@ -138,14 +135,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       autocompleteEnd.addListener('place_changed', () => {
         const place = autocompleteEnd.getPlace();
         if (!place.geometry) return;
-
-        if (markersRef.current[1]) {
-          markersRef.current[1].setMap(null);
-          markersRef.current.pop();
-        }
-
+        if (markersRef.current[1]) markersRef.current[1].setMap(null), markersRef.current.pop();
         addMarker(place.geometry.location, 'End');
-        setEndInput(place.formatted_address || place.geometry.location.toUrlValue());
       });
     }
   };
