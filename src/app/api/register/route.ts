@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcrypt";
 import clientPromise from "@/lib/mongodb";
 
+
 async function getDB() {
   const client = await clientPromise;
   await client.connect();   

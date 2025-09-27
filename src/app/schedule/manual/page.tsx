@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/navbar';
 // For address autocompletion
@@ -11,22 +11,82 @@ type DayName = 'Monday'|'Tuesday'|'Wednesday'|'Thursday'|'Friday'|'Saturday'|'Su
 
 const weekdays: DayName[] = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+type SlotType = {
+    day: string;
+    startTime: string;
+    endTime: string;
+    beginAddress: string;
+    finalAddress: string;
+};
+
 export default function ManualSchedulePage(){
 	const { data: session, status } = useSession();
 	const isLoggedIn = status === 'authenticated';
 
-	const [slots, setSlots] = useState(weekdays.map(day=>({ day, startTime: '', endTime: '', beginAddress: '', finalAddress: '' })));
+    const [slots, setSlots] = useState<SlotType[]>(
+        weekdays.map(day=>({ day, startTime: '', endTime: '', beginAddress: '', finalAddress: '' }))
+    );
 
-	function updateSlot(index:number, patch: Partial<typeof slots[number]>) {
-		setSlots(prev=>{
-			const copy = [...prev];
-			copy[index] = { ...copy[index], ...patch };
-			return copy;
-		});
-	}
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
 
-	const [saving, setSaving] = useState(false);
-	const [message, setMessage] = useState<string | null>(null);
+    // Load analyzed schedule data on component mount
+    useEffect(() => {
+        // Only run this on the client side
+        if (typeof window === 'undefined') return;
+        
+        const analyzedScheduleData = sessionStorage.getItem('analyzedSchedule');
+        if (analyzedScheduleData) {
+            try {
+                const parsedSchedule = JSON.parse(analyzedScheduleData);
+                if (parsedSchedule.availableTimes && Array.isArray(parsedSchedule.availableTimes)) {
+                    // Convert the analyzed schedule to the format expected by the form
+                    const newSlots = weekdays.map(day => {
+                        // Find matching day in analyzed schedule
+                        const matchingTime = parsedSchedule.availableTimes.find((time: any) => 
+                            time.day.toLowerCase() === day.toLowerCase()
+                        );
+                        
+                        if (matchingTime) {
+                            return {
+                                day,
+                                startTime: matchingTime.startTime || '',
+                                endTime: matchingTime.endTime || '',
+                                beginAddress: '', // Addresses aren't provided by Gemini, leave empty for user to fill
+                                finalAddress: ''
+                            };
+                        }
+                        
+                        // If no matching day found, return empty slot
+                        return { day, startTime: '', endTime: '', beginAddress: '', finalAddress: '' };
+                    });
+                    
+                    setSlots(newSlots);
+                    setMessage('Schedule loaded from image analysis! Please add addresses as needed.');
+                    
+                    // Clear the session storage after loading
+                    sessionStorage.removeItem('analyzedSchedule');
+                } else {
+                    // Invalid or empty analyzed schedule data
+                    sessionStorage.removeItem('analyzedSchedule');
+                }
+            } catch (error) {
+                console.error('Error parsing analyzed schedule:', error);
+                setMessage('Error loading analyzed schedule data. Starting with empty form.');
+                // Clear corrupted data
+                sessionStorage.removeItem('analyzedSchedule');
+            }
+        }
+        // If no analyzed schedule data, form starts empty (default behavior)
+    }, []);
+
+    function updateSlot(index:number, patch: Partial<SlotType>) {
+        setSlots(prev=>{
+            const copy = [...prev];
+            copy[index] = { ...copy[index], ...patch };
+            return copy;
+        });
+    }
 
 	async function handleSubmit(e: React.FormEvent){
 		e.preventDefault();
