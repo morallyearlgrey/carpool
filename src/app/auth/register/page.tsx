@@ -84,9 +84,22 @@ export default function RegisterPage() {
         if (!res.ok) {
             const data = await res.json();
             throw new Error(data.message || "Registration failed");
-        } 
+        }
 
-        router.push("/auth/signin");
+        // Try to sign the user in immediately using the credentials provider
+        const signInResult = await signIn("credentials", {
+            redirect: false,
+            email: values.email,
+            password: values.password,
+        });
+
+        if (signInResult?.error) {
+            // If sign in failed for some reason, send them to the sign-in page
+            router.push("/auth/signin");
+        } else {
+            // On success, send the new user to the schedule maker page
+            router.push("/schedule");
+        }
         } catch (err: any) {
             setError(err.message);
         }

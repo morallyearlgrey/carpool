@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
 import { Navbar } from "@/components/navbar"
 
 const ScreenshotIcon = ({ className }: { className?: string }) => (
@@ -33,15 +34,17 @@ const App: React.FC = () => {
       const { data: session, status } = useSession();
         const isLoggedIn = status === "authenticated";
     
+    const router = useRouter();
+
     // Event handlers for the buttons
     const handleManualInputClick = (): void => {
-        console.log('Manual Input button clicked!');
-        // Add navigation or modal logic here
+        // Navigate to the manual schedule form where the user can fill each weekday
+        router.push('/schedule/manual');
     };
 
     const handleImageUploadClick = (): void => {
+        // For now, image upload isn't implemented. Keep as a noop or open file picker later.
         console.log('Image Upload button clicked!');
-        // Add file input logic here
     };
 
     const manualInputIcon = (
@@ -73,19 +76,19 @@ const App: React.FC = () => {
                 {/* Buttons Container */}
                 <div className="flex flex-col md:flex-row justify-center items-center w-full max-w-4xl gap-16 md:gap-20 lg:gap-32">
 									{/* Manual Setup */}
-									<button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
-										<span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
-											<ManualIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
-											Manual Setup
-										</span>
-									</button>
+                                    <button onClick={handleManualInputClick} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+                                        <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
+                                            <ManualIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
+                                            Manual Setup
+                                        </span>
+                                    </button>
 									{/* Upload a Screenshot */}
-									<button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
-										<span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
-											<ScreenshotIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
-											Upload a Screenshot
-										</span>
-									</button>
+                                    <button onClick={handleImageUploadClick} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+                                        <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
+                                            <ScreenshotIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
+                                            Upload a Screenshot
+                                        </span>
+                                    </button>
                 </div>
             </main>
         </div>
