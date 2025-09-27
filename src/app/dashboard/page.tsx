@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import RecommendedRides from '@/components/RecommendedRides';
+import MapComponent from '@/components/MapComponent';
 
 // --- Embedded SVG Icons (No Installation Needed) ---
 const BellIcon = ({ className }: { className?: string }) => (
@@ -35,6 +36,7 @@ const DashboardPage = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [requestResults, setRequestResults] = useState<any[] | null>(null);
   const [offerResults, setOfferResults] = useState<any[] | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState(null);
   useEffect(() => {
     // Set a short timeout to allow the component to render before transitioning
     const timer = setTimeout(() => setIsMounted(true), 100);
@@ -193,17 +195,10 @@ const DashboardPage = () => {
 						</>
 					)}
 				</div>
-				{/* RIGHT COLUMN */}
-				<div className=" p-6 lg:col-span-1 w-full h-full overflow-hidden rounded-md">
-					<iframe
-						src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56151.2670837775!2d-81.3109!3d28.6024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88e767c220b2aa11%3A0x62df9e5b0ff5310!2sUniversity%20of%20Central%20Florida!5e0!3m2!1sen!2sus!4v1693412345678"
-						className="w-full h-full"
-						style={{ border: 0 }}
-						allowFullScreen
-						loading="lazy"
-						referrerPolicy="no-referrer-when-downgrade"
-					/>
-				</div>
+					{/* Right Section with interactive map */} <div 
+					className="lg:col-span-1 w-full h-full rounded-md pr-5"> 
+					<MapComponent onRouteSelected={setSelectedRoute} /> 
+				</div> 
       </main>
     </div>
   );
