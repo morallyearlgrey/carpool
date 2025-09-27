@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 export default function App() {
   // State to manage the selected gender ('F', 'M', or null)
   const [selectedGender, setSelectedGender] = useState(null);
-	const [currentPage, setCurrentPage] = useState('profile');
 
   /**
    * Handles the click event for the gender selection buttons.
