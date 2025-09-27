@@ -81,23 +81,21 @@ export default function Screenshot() {
         try {
             const formData = new FormData();
             formData.append('image', selectedImage);
-formData.append('prompt', `
-Return **ONLY JSON** with \`availableTimes\` for the schedule in the uploaded image. Each day (Sunday → Saturday) must be included. If unclear, use full-day availability. Use 0,0 for all coordinates. For example: 
-{
-  "availableTimes": [
-    {
-      "day": "Sunday",
-      "startTime": "00:00",
-      "endTime": "23:59",
-      "beginLocation": { "lat": 0, "long": 0 },
-      "finalLocation": { "lat": 0, "long": 0 }
-    }
-  ]
-}
-`);
-
+            formData.append('prompt', `
+            Return **ONLY JSON** with \`availableTimes\` for the schedule in the uploaded image. Each day (Sunday → Saturday) must be included with only one start time and one end time per day. If unclear, use full-day availability. Start time should be the beginning time of the earliest event while end time sohuld be the ending time of the latest event For example: 
+            {
+            "availableTimes": [
+                {
+                "day": "Sunday",
+                "startTime": "00:00",
+                "endTime": "23:59",
+                "beginLocation": { "lat": 0, "long": 0 },
+                "finalLocation": { "lat": 0, "long": 0 }
+                }
+            ]
+            }
+            `);
             
-
             
 
             //     Return a JSON object in this exact format:
