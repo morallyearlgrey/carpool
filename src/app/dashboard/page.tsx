@@ -77,22 +77,19 @@ const DashboardPage = () => {
   // NOTE: request cancellation UI was moved into the My Requests -> Outgoing tab.
   // Deletion is handled from that component so users manage outgoing requests in one place.
 
-// Inside DashboardPage component
+  // Handle submitting a ride request
+  const handleRequestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!start || !end) return alert('Please select both start and end locations.');
+    setSearchLoading(true);
 
-const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  if (!start || !end) return alert('Please select both start and end locations.');
+    const form = e.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const date = fd.get('date') as string;
+    const startTime = fd.get('startTime') as string;
+    const finalTime = fd.get('finalTime') as string;
 
-  setSearchLoading(true);
-
-  const form = e.target as HTMLFormElement;
-  const fd = new FormData(form);
-  const date = fd.get('date') as string;
-  const startTime = fd.get('startTime') as string;
-  const finalTime = fd.get('finalTime') as string;
-
-  try {
-    if (rideMode === 'request') {
+    try {
       // POST to recommendations to see if there are matching rides
       const res = await fetch('/api/recommendations', {
         method: 'POST',
@@ -112,7 +109,6 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       let rideId: string | null = null;
 
       if (candidates.length > 0) {
-        // Found candidate rides → use first one as current ride
         setRequestResults(candidates);
         rideId = candidates[0]?._id || null;
       } else {
@@ -132,16 +128,32 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
         const publicData = await publicRes.json();
         rideId = publicData.requestId;
-        console.log('Ride ID returned (public):', rideId);
-
         setRequestResults([]);
       }
 
-      // Save the ride ID for canceling
       setCurrentRideId(rideId);
-    } else if (rideMode === 'offer') {
-      // Ride offer flow
-      await fetch('/api/offers', {
+    } catch (err) {
+      console.error(err);
+      alert('Error sending request. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Handle submitting a ride offer
+  const handleOfferSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!start || !end) return alert('Please select both start and end locations.');
+    setSearchLoading(true);
+
+    const form = e.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const date = fd.get('date') as string;
+    const startTime = fd.get('startTime') as string;
+    const finalTime = fd.get('finalTime') as string;
+
+    try {
+      const res = await fetch('/api/offers', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -153,15 +165,18 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           finalTime,
         }),
       });
+
+      const data = await res.json();
+      setCurrentRideId(data.offer?._id || null);
       setRequestResults([]);
+    } catch (err) {
+      console.error(err);
+      alert('Error sending offer. Please try again.');
+    } finally {
+      setSearchLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-    alert('Error sending request. Please try again.');
-  } finally {
-    setSearchLoading(false);
-  }
-};
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
@@ -175,41 +190,80 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
 
         {/* MIDDLE COLUMN */}
-      {/* MIDDLE COLUMN */}
         <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
           {isRequestOpen ? (
             <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
               {/* X Close Button */}
               <button
-                onClick={() => handleDelete('request', currentRideId!)}
+                onClick={() => {
+                  if (currentRideId) {
+                    if (rideMode === 'request') handleRequestDelete(currentRideId);
+                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
+                  } else {
+                    setIsRequestOpen(false);
+                  }
+                }}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >
                 ✕
               </button>
+
               <h3 className="text-xl font-bold mb-4">
                 {rideMode === 'request' ? 'Request a Ride' : 'Offer a Ride'}
               </h3>
 
-              <form onSubmit={handleRideSubmit}>
-                <input name="beginAddress" value={start?.address || ''} placeholder="Start address" readOnly className="inputs mb-2" />
-                <input name="finalAddress" value={end?.address || ''} placeholder="End address" readOnly className="inputs mb-2" />
-                <input type="date" name="date" defaultValue={new Date().toISOString().slice(0, 10)} className="inputs mb-2" />
+              <form
+                onSubmit={(e) => {
+                  if (rideMode === 'request') handleRequestSubmit(e);
+                  else if (rideMode === 'offer') handleOfferSubmit(e);
+                }}
+              >
+                <input
+                  name="beginAddress"
+                  value={start?.address || ''}
+                  placeholder="Start address"
+                  readOnly
+                  className="inputs mb-2"
+                />
+                <input
+                  name="finalAddress"
+                  value={end?.address || ''}
+                  placeholder="End address"
+                  readOnly
+                  className="inputs mb-2"
+                />
+                <input
+                  type="date"
+                  name="date"
+                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  className="inputs mb-2"
+                />
                 <input name="startTime" placeholder="08:30" className="inputs mb-2" />
                 <input name="finalTime" placeholder="09:00" className="inputs mb-2" />
-                
+
                 {/* Submit button */}
-                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">
-                  {rideMode === 'request' ? 'Request' : 'Offer'}
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded"
+                  disabled={searchLoading}
+                >
+                  {searchLoading
+                    ? rideMode === 'request'
+                      ? 'Requesting...'
+                      : 'Offering...'
+                    : rideMode === 'request'
+                    ? 'Request'
+                    : 'Offer'}
                 </button>
               </form>
 
-              {/* Results Section */}
-              {requestResults && requestResults.length === 0 && (
+              {/* Results Section (for requests) */}
+              {rideMode === 'request' && requestResults && requestResults.length === 0 && (
                 <div className="mt-4 text-sm text-gray-600">
                   No matches found... your request has been posted publicly.
                 </div>
               )}
-              {requestResults && requestResults.length > 0 && (
+              {rideMode === 'request' && requestResults && requestResults.length > 0 && (
                 <div className="mt-4">
                   <h4 className="font-semibold">Found Matches:</h4>
                   <ul className="list-disc list-inside text-sm text-gray-700">
@@ -242,9 +296,9 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 </span>
               </button>
             </>
-
           )}
         </div>
+
 
         {/* RIGHT COLUMN: Map */}
         <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
