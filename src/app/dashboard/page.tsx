@@ -53,7 +53,7 @@ const DashboardPage = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         
-        <div className={`lg:col-span-1 flex flex-col gap-8 ${animationClasses('100ms')}`}>
+        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
             <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2"><BellIcon className="text-[#3a3a5a]"/> Upcoming Rides</h2>
             <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex items-center justify-center p-4">
@@ -174,20 +174,16 @@ const DashboardPage = () => {
             </div>
           </div>
         )}
-
-        <div className={`lg:col-span-1 bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex flex-col items-center ${animationClasses('300ms')}`}>
-          <h2 className="text-2xl font-bold text-[#3a3a5a] mb-6 w-full text-center flex items-center justify-center gap-2"><UserIcon className="text-[#3a3a5a]"/> Profile</h2>
-          <div className="w-32 h-32 bg-gray-200 rounded-lg mb-6 flex items-center justify-center text-gray-500 text-sm overflow-hidden shadow-inner">
-            <UserIcon className="w-16 h-16 text-gray-400"/>
-          </div>
-          <div className="w-full space-y-4">
-            <input type="text" placeholder="Name" className="inputs" />
-            <input type="text" placeholder="Age" className="inputs" />
-            <input type="text" placeholder="Gender" className="inputs" />
-            <input type="text" placeholder="School" className="inputs" />
-            <input type="text" placeholder="Work" className="inputs" />
-          </div>
-        </div>
+      <div className=" p-6 lg:col-span-1 w-full h-full overflow-hidden rounded-md">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d56151.2670837775!2d-81.3109!3d28.6024!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88e767c220b2aa11%3A0x62df9e5b0ff5310!2sUniversity%20of%20Central%20Florida!5e0!3m2!1sen!2sus!4v1693412345678"
+          className="w-full h-full"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
       </main>
     </div>
   );
