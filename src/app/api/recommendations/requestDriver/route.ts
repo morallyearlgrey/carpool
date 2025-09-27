@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
 
     // create a Request document representing the rider's request
     const newRequest = await RequestModel.create({
-      user: riderId,
+      requestSender: riderId,
+      requestReceiver: driverId, // HELP would driverID go here?
       beginLocation,
       finalLocation,
       date: new Date(date),
@@ -40,9 +41,21 @@ export async function POST(req: NextRequest) {
       const driver = await User.findById(driverId);
       if (!driver) return NextResponse.json({ error: 'driver not found' }, { status: 404 });
 
-      driver.requests = driver.requests || [];
-      driver.requests.push(newRequest._id);
+      driver.incomingRequests = driver.incomingRequests || [];
+      driver.incomingRequests.push(newRequest._id);
       await driver.save();
+
+      // TODO: notify driver via push/email
+      return NextResponse.json({ ok: true, requestId: newRequest._id });
+    }
+
+    if (riderId) {
+      const rider = await User.findById(riderId);
+      if (!rider) return NextResponse.json({ error: 'rider not found' }, { status: 404 });
+
+      rider.outgoingRequests = rider.outgoingRequests || [];
+      rider.outgoingRequests.push(newRequest._id);
+      await rider.save();
 
       // TODO: notify driver via push/email
       return NextResponse.json({ ok: true, requestId: newRequest._id });

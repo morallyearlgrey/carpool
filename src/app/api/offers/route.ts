@@ -7,7 +7,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const offer = await OfferModel.create({
-      user: body.userId,
+      requestSender: body.userId,
+      requestReceiver: body.userId,
       beginLocation: body.beginLocation,
       finalLocation: body.finalLocation,
       date: body.date,

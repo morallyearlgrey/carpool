@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema({
     rides: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ride" }],
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: "Schedule" },
 
-    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+    incomingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+    outgoingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
 
     age: {type: Number},
     gender: {type: String},

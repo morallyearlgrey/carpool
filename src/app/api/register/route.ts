@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcrypt";
 import clientPromise from "@/lib/mongodb";
+import { IncomingMessage } from "http";
 
 
 async function getDB() {
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
       currentRide: null,
       rides: [],
       schedule: [],
-      requests: [],
+      incomingRequests: [],
+      outgoingRequests: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
