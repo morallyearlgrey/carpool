@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
           {/* Responsive Font Size for Headline */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight text-shadow">
             <span
-              className={`transition-opacity duration-300 inline-block mr-3 sm:mr-4 ${
+              className={`transition-opacity duration-300 inline-block mr-4 sm:mr-4 ${
                 fade ? "opacity-100" : "opacity-0"
               }`}
             >
