@@ -125,12 +125,16 @@ body {
   background-color: #e6e2f0;
 }
 
+.buttons2 {
+  background: #342b52;
+}
+
 .buttons {
-	background: #663399;
+	background: #6c62fe;
 }
 
 .buttons:hover {
-	background: #5f5198;
+	background: #3a3a5a;
 }
 
 .inputs {
@@ -146,10 +150,25 @@ body {
 
 .inputs:hover {
 	outline: none;
-	box-shadow: 0 0 0 2px #663399;
+	box-shadow: 0 0 0 2px #3a3a5a;
 }
 
 .inputs:focus {
 	outline: none;
-	box-shadow: 0 0 0 2px #663399;
+	box-shadow: 0 0 0 2px #3a3a5a;
 }
+
+.text-shadow {
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.text-shadow-lg {
+  text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.cal-sans-regular {
+  font-family: "Cal Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+

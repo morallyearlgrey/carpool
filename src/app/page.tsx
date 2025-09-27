@@ -50,7 +50,7 @@ const HomePage: React.FC = () => {
         {/* Right: Text Content */}
         <div className="flex flex-col items-center md:items-start justify-center w-full md:w-1/2 text-center md:text-left py-12 md:py-0">
           {/* Responsive Font Size for Headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[#3a3a5a] mb-6 leading-tight">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight text-shadow">
             <span
               className={`transition-opacity duration-300 inline-block mr-3 sm:mr-4 ${
                 fade ? "opacity-100" : "opacity-0"
@@ -58,7 +58,7 @@ const HomePage: React.FC = () => {
             >
               {words[currentWordIndex]}
             </span>
-            <span className="inline-block">
+            <span className="inline-block text-[#3a3a5a] text-shadow">
               commuting
             </span>
           </h1>
