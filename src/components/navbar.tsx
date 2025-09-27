@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/solid";
 
-const routes: { title: string; href: string }[] = [
-  { title: "Dashboard", href: "/dashboard" },
-  { title: "Schedule", href: "/schedule" },
-  { title: "Login", href: "/auth/signin" },
-  { title: "Register", href: "/auth/register" },
+const routes: { title: string; href: string; authRequired?: boolean }[] = [
+  { title: "Dashboard", href: "/dashboard", authRequired: true },
+  { title: "Schedule", href: "/schedule", authRequired: true },
+  { title: "Login", href: "/auth/signin", authRequired: false },
+  { title: "Register", href: "/auth/register", authRequired: false },
 ];
 
 interface NavbarProps {
@@ -20,14 +20,20 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-//   const profilePhoto = photo || "/LogOut.png";
   const profilePhoto = "/grimace.jpg";
+
+  // Filter routes based on login status
+  const filteredRoutes = routes.filter(route => {
+    if (isLoggedIn) return route.authRequired !== false;
+    return !route.authRequired;
+  });
 
   return (
     <div className={`relative w-full z-20 ${className || ''}`}>
       <div className="absolute inset-0 h-28 bg-gradient-to-b from-[#402B52]/90 to-transparent pointer-events-none" />
 
       <div className="relative flex items-center justify-between h-30 w-full px-6">
+        {/* Logo */}
         <div className="flex justify-start">
           <Link href="/" className="flex items-start -space-x-1">
             <img src="/favicon.png" alt="KnightPool logo" className="w-16 h-16" />
@@ -40,18 +46,18 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
           </Link>
         </div>
 
+        {/* Desktop Menu */}
         <div className="justify-end sm:flex hidden gap-2">
-          {routes.map((route, index) => {
-            if (isLoggedIn && (route.title === "Login" || route.title === "Register")) return null;
-
+          {filteredRoutes.map((route, index) => {
             const isSpecial = route.title === "Login" || route.title === "Register";
-
             return (
               <Link
                 key={index}
                 href={route.href}
                 className={`relative flex items-center px-4 py-2 text-white text-base rounded-sm transition-all duration-500 ${
-                  isSpecial ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#3a3a5a] hover:bg-[#3a3a5a] transition whitespace-nowrap" : "hover:text-[#3a3a5a]"
+                  isSpecial
+                    ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#3a3a5a] hover:bg-[#3a3a5a] transition whitespace-nowrap"
+                    : "hover:text-[#3a3a5a]"
                 }`}
               >
                 {route.title}
@@ -59,7 +65,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
             );
           })}
 
-          {/* Profile image */}
           {isLoggedIn && (
             <Link href="/profile">
               <Image
@@ -73,6 +78,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
           )}
         </div>
 
+        {/* Mobile Menu Toggle */}
         <button
           onClick={toggleMenu}
           className="sm:hidden bg-[#663399] rounded z-50 cursor-pointer"
@@ -81,10 +87,12 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
         </button>
       </div>
 
+      {/* Mobile Menu */}
       {menuOpen && (
         <MobileMenu
           toggleMenu={toggleMenu}
           isLoggedIn={isLoggedIn}
+          routes={filteredRoutes}
           photo={profilePhoto}
         />
       )}
@@ -95,10 +103,11 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, className }) => {
 interface MobileMenuProps {
   toggleMenu: () => void;
   isLoggedIn: boolean;
+  routes: typeof routes;
   photo?: string | null;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ toggleMenu, isLoggedIn, photo }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ toggleMenu, routes, photo }) => {
   return (
     <div className="fixed inset-0 flex flex-col z-40 bg-black">
       <div className="flex w-full flex-col gap-1 px-4 pb-2 py-12">
@@ -107,7 +116,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ toggleMenu, isLoggedIn, photo }
           onClick={toggleMenu}
           className="flex items-center space-x-2"
         >
-          <svg className="w-8 h-8 text-[#663399]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w.org/2000/svg">
+          <svg className="w-8 h-8 text-[#663399]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
           </svg>
           <h1 className="text-2xl font-extrabold text-[#663399] tracking-wide">
@@ -116,17 +125,16 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ toggleMenu, isLoggedIn, photo }
         </Link>
 
         {routes.map((route, index) => {
-          if (isLoggedIn && (route.title === "Login" || route.title === "Register")) return null;
-
           const isSpecial = route.title === "Login" || route.title === "Register";
-
           return (
             <Link
               key={index}
               href={route.href}
               onClick={toggleMenu}
               className={`flex items-center px-4 py-2 text-white text-sm rounded-sm transition-all duration-500 ${
-                isSpecial ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-[#663399] transition whitespace-nowrap" : "hover:text-[#663399]"
+                isSpecial
+                  ? "px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-[#663399] transition whitespace-nowrap"
+                  : "hover:text-[#663399]"
               }`}
             >
               {route.title}
@@ -134,7 +142,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ toggleMenu, isLoggedIn, photo }
           );
         })}
 
-        {isLoggedIn && photo && (
+        {photo && (
           <div className="mt-auto px-4 pb-4">
             <Link href="/account" onClick={toggleMenu}>
               <Image
