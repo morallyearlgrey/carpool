@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
 
     vehicleInfo: {
         seatsAvailable: {type: Number},
-        make: {type: String},
+    make: {type: String},
         model: {type: String},
         year: {type: String},
 
