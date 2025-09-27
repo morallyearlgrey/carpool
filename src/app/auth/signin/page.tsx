@@ -47,10 +47,11 @@ export default function SignIn() {
           <Navbar isLoggedIn={isLoggedIn}></Navbar>
       
 
-      {/* Main content area for the form */}
+      <main className="flex-grow flex items-center justify-center p-4">
         
-        <div className="w-1/2 h-full flex items-center justify-center flex-col p-20">
-        <h1 className="text-3xl text-[var(--tan)] font-bold mb-6">LOG IN</h1>
+        <div className="w-full max-w-sm bg-[#f7f5fc] p-8 rounded-3xl shadow-lg">
+          <h2 className="text-3xl font-bold text-center mb-8">LOG IN</h2>
+          
             <form onSubmit={handleSubmit} className="space-y-4">
                 <input
                 type="email"
@@ -68,12 +69,14 @@ export default function SignIn() {
                 />
                 <button
                 type="submit"
-                className="w-full p-2 bg-[var(--dark-blue)] text-white rounded-lg disabled:opacity-50  transition-transform cursor-pointer hover:scale-102"
+                className="px-4 py-1.5 text-sm md:px-6 md:py-2 md:text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-[#663399]/60  whitespace-nowrap cursor-pointer transition-all duration-300"
                 >
-                SIGN IN
+                SUBMIT
                 </button>
             </form>
         </div>
+    </main>
+
     </div>
 
     )

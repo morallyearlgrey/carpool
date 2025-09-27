@@ -32,16 +32,6 @@ export default function App() {
     // Main container with a light purple background
     <div className="min-h-screen font-sans text-[#663399] flex flex-col">
     <Navbar isLoggedIn={isLoggedIn}></Navbar>
-      
-      {/* Header Section */}
-      <header className="w-full p-6 sm:p-8">
-        <div className="container mx-auto flex items-center">
-          {/* Diamond Logo */}
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#663399] transform rotate-45 mr-4"></div>
-          {/* Brand Name */}
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-wider text-[#663399]">KNIGHTPOOL</h1>
-        </div>
-      </header>
 
       {/* Main content area for the form */}
       <main className="flex-grow flex items-center justify-center p-4">
