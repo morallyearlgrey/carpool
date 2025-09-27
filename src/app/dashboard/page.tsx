@@ -48,6 +48,8 @@ const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
 
+  const [showComponent, setShowComponent] = useState(false);
+
   const [isMounted, setIsMounted] = useState(false);
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [rideMode, setRideMode] = useState<'request' | 'offer'>('request'); // track which button was clicked
@@ -59,6 +61,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     setIsMounted(true);
+    setShowComponent(true);
   }, []);
 
   const animationClasses = (delay: string) =>
@@ -317,12 +320,13 @@ const DashboardPage = () => {
 
         {/* RIGHT COLUMN: Map */}
         <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
-          <MapComponent
+          {showComponent ? (<MapComponent
             onRouteSelected={(route) => {
               setStart(route.start);
               setEnd(route.end);
             }}
-          />
+          />) : (<></>)}
+          
         </div>
       </main>
     </div>
