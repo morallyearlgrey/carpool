@@ -1,6 +1,7 @@
 'use client'; // Required for using React hooks like useState and useEffect
 
 import React, { useState, useEffect } from 'react';
+import RecommendedRides from '@/components/RecommendedRides';
 
 // --- Embedded SVG Icons (No Installation Needed) ---
 const BellIcon = ({ className }: { className?: string }) => (
@@ -58,8 +59,9 @@ const DashboardPage = () => {
           </div>
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
             <h2 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2"><RouteIcon className="text-purple-600"/> Suggested Rides</h2>
-            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex items-center justify-center p-4">
-              <p className="text-gray-600 text-lg">No suggested rides available.</p>
+            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
+              {/* Recommended rides component - replace currentUserId and request with real data when available */}
+              <RecommendedRides currentUserId={"000000000000000000000000"} request={{ date: new Date().toISOString(), startTime: '08:30', beginLocation: { lat: 37.77, long: -122.42 }, finalLocation: { lat: 37.79, long: -122.39 } }} />
             </div>
           </div>
         </div>
