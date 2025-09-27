@@ -50,21 +50,22 @@ const DashboardPage = () => {
 
   const [isMounted, setIsMounted] = useState(false);
   const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [rideMode, setRideMode] = useState<'request' | 'offer'>('request'); // track which button was clicked
   const [searchLoading, setSearchLoading] = useState(false);
   const [requestResults, setRequestResults] = useState<any[] | null>(null);
 
-  // Map selections
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
 
   useEffect(() => {
-    setIsMounted(true); // fade in animations
+    setIsMounted(true);
   }, []);
 
   const animationClasses = (delay: string) =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
-  const handleRequestRide = () => {
+  const handleOpenRideForm = (mode: 'request' | 'offer') => {
+    setRideMode(mode);
     setIsRequestOpen(true);
   };
 
@@ -79,7 +80,7 @@ const DashboardPage = () => {
             <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
               <BellIcon className="text-[#3a3a5a]" /> Upcoming Rides
             </h2>
-            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex items-center justify-center p-4">
+            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex p-4">
               <p className="text-gray-600 text-lg">No upcoming rides scheduled.</p>
             </div>
           </div>
@@ -108,10 +109,41 @@ const DashboardPage = () => {
         </div>
 
         {/* MIDDLE COLUMN */}
+      {/* MIDDLE COLUMN */}
         <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
           {isRequestOpen ? (
-            <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
-              <h3 className="text-xl font-bold mb-4">Request a Ride</h3>
+            <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
+              {/* X Close Button */}
+              <button
+                onClick={async () => {
+                  if (searchLoading) {
+                    // Cancel pending request on backend if one exists
+                    try {
+                      await fetch('/api/requests/cancel', {
+                        method: 'DELETE',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+                        }),
+                      });
+                    } catch (err) {
+                      console.error('Cancel request failed', err);
+                    }
+                  }
+                  setIsRequestOpen(false);
+                  setRideMode('request');
+                  setSearchLoading(false);
+                  setRequestResults(null);
+                }}
+                className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
+              >
+                ✕
+              </button>
+
+              <h3 className="text-xl font-bold mb-4">
+                {rideMode === 'request' ? 'Request a Ride' : 'Offer a Ride'}
+              </h3>
+
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
@@ -137,13 +169,32 @@ const DashboardPage = () => {
                         finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
                       }),
                     });
+
                     const data = await res.json();
                     const candidates = data.candidates || [];
-                    setRequestResults(candidates.length ? candidates : []);
+
+                    if (candidates.length > 0) {
+                      setRequestResults(candidates);
+                    } else {
+                      // No matches → post publicly
+                      await fetch('/api/requests/public', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+                          beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+                          finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+                          date,
+                          startTime,
+                          finalTime,
+                        }),
+                      });
+                      setRequestResults([]);
+                    }
                   } catch (err) {
                     console.error(err);
-                  } finally {
-                    setSearchLoading(false);
+                    alert('Error sending request. Please try again.');
+                    setSearchLoading(false); // allow retry
                   }
                 }}
               >
@@ -161,26 +212,66 @@ const DashboardPage = () => {
                   className="inputs mb-2"
                   readOnly
                 />
-                <input type="date" name="date" defaultValue={new Date().toISOString().slice(0, 10)} className="inputs mb-2" />
+                <input
+                  type="date"
+                  name="date"
+                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  className="inputs mb-2"
+                />
                 <input name="startTime" placeholder="08:30" className="inputs mb-2" />
                 <input name="finalTime" placeholder="09:00" className="inputs mb-2" />
-                <div className="flex justify-end gap-2 mt-4">
-                  <button type="button" onClick={() => setIsRequestOpen(false)} className="px-4 py-2 border rounded">
-                    Cancel
-                  </button>
-                  <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">
-                    {searchLoading ? 'Searching...' : 'Search'}
-                  </button>
-                </div>
+
+                {/* Action Buttons / Loader */}
+                {!searchLoading ? (
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsRequestOpen(false);
+                        setRideMode('request');
+                      }}
+                      className="px-4 py-2 border rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-purple-600 text-white rounded"
+                    >
+                      Request
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-6 flex flex-col items-center gap-2">
+                    <span className="text-purple-700 font-medium">Searching...</span>
+                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 bg-purple-600 animate-pulse w-1/2"></div>
+                    </div>
+                  </div>
+                )}
               </form>
+
+              {/* Results Section */}
               {requestResults && requestResults.length === 0 && (
-                <div className="mt-4 text-sm text-gray-600">No matches found...</div>
+                <div className="mt-4 text-sm text-gray-600">
+                  No matches found... your request has been posted publicly.
+                </div>
+              )}
+              {requestResults && requestResults.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold">Found Matches:</h4>
+                  <ul className="list-disc list-inside text-sm text-gray-700">
+                    {requestResults.map((r, i) => (
+                      <li key={i}>{JSON.stringify(r)}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           ) : (
             <>
               <button
-                onClick={handleRequestRide}
+                onClick={() => handleOpenRideForm('request')}
                 className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl"
               >
                 <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
@@ -188,13 +279,18 @@ const DashboardPage = () => {
                   Request a Ride
                 </span>
               </button>
-              <button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+
+              <button
+                onClick={() => handleOpenRideForm('offer')}
+                className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl"
+              >
                 <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
                   <CarIcon className="w-8 h-8 transition-transform duration-300 group-hover:translate-x-1" />
                   Offer a Ride
                 </span>
               </button>
             </>
+
           )}
         </div>
 
