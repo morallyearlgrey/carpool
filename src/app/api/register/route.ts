@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       },
       currentRide: null,
       rides: [],
-      schedule: null,
+      schedule: [],
       requests: [],
       createdAt: new Date(),
       updatedAt: new Date(),
