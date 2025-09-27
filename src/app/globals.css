@@ -124,3 +124,32 @@
 body {
   background-color: #e6e2f0;
 }
+
+.buttons {
+	background: #663399;
+}
+
+.buttons:hover {
+	background: #5f5198;
+}
+
+.inputs {
+	background: white;
+	width: 100%;
+	border-radius: 9999px;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	padding-top: 0.75rem;
+	padding-bottom: 0.75rem;
+	padding-left: 0.75rem;
+	padding-right: 0.75rem;
+}
+
+.inputs:hover {
+	outline: none;
+	box-shadow: 0 0 0 2px #663399;
+}
+
+.inputs:focus {
+	outline: none;
+	box-shadow: 0 0 0 2px #663399;
+}
