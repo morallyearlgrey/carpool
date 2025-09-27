@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import RecommendedRides from '@/components/RecommendedRides';
+import MyRides from '@/components/MyRides';
+import MyRequests from '@/components/MyRequests';
 import { Navbar } from '@/components/navbar';
 
 // Dynamically import MapComponent so it only renders on the client
@@ -73,27 +74,8 @@ const DashboardPage = () => {
     setIsRequestOpen(true);
   };
 
-  const handleDelete = async (type: 'request' | 'offer', id: string | null) => {
-  if (!id) return alert("No ride selected to cancel");
-  if (!confirm('Are you sure you want to cancel this ride?')) return;
-
-  try {
-    const res = await fetch(`/api/${type}s/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete ride');
-
-    // Clear frontend state
-    if (type === 'request') {
-      setRequestResults(null);
-      if (currentRideId === id) setCurrentRideId(null);
-    }
-    setIsRequestOpen(false);
-    setSearchLoading(false);
-    setRideMode('request');
-  } catch (err) {
-    console.error('Failed to delete', type, id, err);
-    alert('Failed to cancel ride. Please try again.');
-  }
-};
+  // NOTE: request cancellation UI was moved into the My Requests -> Outgoing tab.
+  // Deletion is handled from that component so users manage outgoing requests in one place.
 
 // Inside DashboardPage component
 
@@ -188,36 +170,8 @@ const handleRideSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* LEFT COLUMN */}
         <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
-          <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
-            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
-              <BellIcon className="text-[#3a3a5a]" /> Upcoming Rides
-            </h2>
-            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex p-4">
-              <p className="text-gray-600 text-lg">No upcoming rides scheduled.</p>
-            </div>
-          </div>
-
-          <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
-            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
-              <RouteIcon className="text-[#3a3a5a]" /> Suggested Rides
-            </h2>
-            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
-              {isLoggedIn ? (
-                <RecommendedRides
-                  currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''}
-                  request={{
-                    date: new Date().toISOString(),
-                    startTime: '08:30',
-                    beginLocation: { lat: 37.77, long: -122.42 },
-                    finalLocation: { lat: 37.79, long: -122.39 },
-                  }}
-                  mode={'schedules'}
-                />
-              ) : (
-                <p className="text-gray-600 text-lg">Sign in to see suggested drivers near your schedule.</p>
-              )}
-            </div>
-          </div>
+          <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
+          <MyRequests />
         </div>
 
         {/* MIDDLE COLUMN */}

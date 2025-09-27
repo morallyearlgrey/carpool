@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/navbar';
 // For address autocompletion
-import { APIProvider } from '@vis.gl/react-google-maps';
 import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 type DayName = 'Monday'|'Tuesday'|'Wednesday'|'Thursday'|'Friday'|'Saturday'|'Sunday';
@@ -157,7 +156,7 @@ export default function ManualSchedulePage(){
 									<label className="block text-sm">Final Address</label>
 									<PlacesAutocomplete
 											onAddressSelect={({ description }) => {
-													updateSlot(i, { beginAddress: description });
+												updateSlot(i, { finalAddress: description });
 											}}
 											placeholder="e.g. 456 Third Dr, City"
 									/>
