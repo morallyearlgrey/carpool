@@ -67,11 +67,125 @@ const DashboardPage = () => {
   const animationClasses = (delay: string) =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
-  const handleOpenRideForm = (mode: 'request' | 'offer') => {
-    setRideMode(mode);
-    setIsRequestOpen(true);
-  };
+  // Updated handleOpenRideForm function for the dashboard
+// In your dashboard page.tsx, replace the handleOpenRideForm function:
 
+const handleOpenRideForm = async (mode: 'request' | 'offer') => {
+  if (mode === 'request') {
+    // Handle immediate request processing
+    if (!start || !end) {
+      alert('Please select both start and end locations on the map first.');
+      return;
+    }
+
+    setSearchLoading(true);
+    
+    try {
+      const userId = (session as any)?.user?.id || (session as any)?.user?.email || '';
+      
+      const requestPayload = {
+        userId,
+        beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
+        finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
+        date: new Date().toISOString().split('T')[0],
+        startTime: '08:00', // You can make these dynamic later
+        finalTime: '09:00'
+      };
+
+      // First, try to find matching rides
+      const ridesRes = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...requestPayload, mode: 'rides' }),
+      });
+
+      const ridesData = await ridesRes.json();
+      const rideMatches = ridesData.candidates || [];
+
+      let requestSent = false;
+
+      if (rideMatches.length > 0) {
+        // Send request to the best matching ride
+        const bestMatch = rideMatches[0];
+        const sendRes = await fetch('/api/requests/send', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...requestPayload,
+            driverId: bestMatch.driver._id,
+            rideId: bestMatch.rideId,
+            requestReceiver: bestMatch.driver._id
+          }),
+        });
+
+        if (sendRes.ok) {
+          setRequestResults(rideMatches);
+          requestSent = true;
+        }
+      }
+
+      if (!requestSent) {
+        // Try schedule-based matching
+        const scheduleRes = await fetch('/api/recommendations', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...requestPayload, mode: 'schedules' }),
+        });
+
+        const scheduleData = await scheduleRes.json();
+        const scheduleMatches = scheduleData.candidates || [];
+
+        if (scheduleMatches.length > 0) {
+          const bestScheduleMatch = scheduleMatches[0];
+          const sendRes = await fetch('/api/requests/send', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              ...requestPayload,
+              driverId: bestScheduleMatch.driver._id,
+              requestReceiver: bestScheduleMatch.driver._id
+            }),
+          });
+
+          if (sendRes.ok) {
+            setRequestResults(scheduleMatches);
+            requestSent = true;
+          }
+        }
+      }
+
+      if (!requestSent) {
+        // No matches - post publicly
+        await fetch('/api/requests/public', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(requestPayload),
+        });
+        setRequestResults([]);
+      }
+
+    } catch (error) {
+      console.error('Error processing ride request:', error);
+      alert('Error processing your request. Please try again.');
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+  
+  // Always open the form for further details/confirmation
+  setRideMode(mode);
+  setIsRequestOpen(true);
+};
+
+// You might also want to add a success message state:
+const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+// And display it in your JSX:
+{successMessage && (
+  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700">
+    {successMessage}
+  </div>
+)}
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       <Navbar isLoggedIn={isLoggedIn} />

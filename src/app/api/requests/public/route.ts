@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import RequestModel from '@/lib/models/request';
+import mongooseConnect from '@/lib/mongoose'; // Import the connection
 
 export async function POST(req: NextRequest) {
   try {
+    await mongooseConnect;
     const body = await req.json();
     const { userId, driverId, beginLocation, finalLocation, date, startTime, finalTime } = body;
     if (!userId || !driverId || !beginLocation || !finalLocation || !date || !startTime || !finalTime) {

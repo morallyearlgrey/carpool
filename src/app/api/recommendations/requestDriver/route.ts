@@ -7,6 +7,7 @@ import mongooseConnect from '@/lib/mongoose';
 export async function POST(req: NextRequest) {
   try {
     await mongooseConnect;
+    
     const { riderId, rideId, driverId, beginLocation, finalLocation, date, startTime, finalTime } = await req.json();
     if (!riderId || !beginLocation || !finalLocation || !date || !startTime || !finalTime) {
       return NextResponse.json({ error: 'missing required fields' }, { status: 400 });

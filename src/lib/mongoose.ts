@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
-  // throw here would break builds; log instead and let callers handle
   console.warn('MONGODB_URI not set');
 }
 
@@ -12,9 +11,11 @@ declare global {
 }
 
 if (!global._mongoosePromise) {
-  // create the promise once in the global scope (works for serverless)
-  global._mongoosePromise = mongoose.connect(MONGODB_URI || '').then(m => {
-    console.debug('mongoose connected');
+  global._mongoosePromise = mongoose.connect(MONGODB_URI || '', {
+    // Explicitly specify the database name
+    dbName: 'carpool'
+  }).then(m => {
+    console.debug('mongoose connected to carpool database');
     return mongoose;
   }).catch(err => {
     console.error('mongoose connect error', err && err.message ? err.message : err);
