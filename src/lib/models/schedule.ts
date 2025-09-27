@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 const AvailableTimeSchema = new mongoose.Schema({
   day: { type: String, required: true },
   startTime: { type: String, required: true }, 
-  endTime: { type: String, required: true }
+  endTime: { type: String, required: true },
+  location: {
+    lat: { type: Number, required: true },
+    long: { type: Number, required: true }
+  },
 
 }); 
 
