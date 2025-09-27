@@ -30,6 +30,10 @@ const DashboardPage = () => {
     const isLoggedIn = status === "authenticated";
   // State to trigger the animation after the component mounts
   const [isMounted, setIsMounted] = useState('dashboard');
+  // Request modal state
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [requestResults, setRequestResults] = useState<any[] | null>(null);
   useEffect(() => {
     // Set a short timeout to allow the component to render before transitioning
     const timer = setTimeout(() => setIsMounted(true), 100);
@@ -59,14 +63,18 @@ const DashboardPage = () => {
           <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
             <h2 className="text-2xl font-bold text-purple-800 mb-4 flex items-center gap-2"><RouteIcon className="text-purple-600"/> Suggested Rides</h2>
             <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
-              {/* Recommended rides component - replace currentUserId and request with real data when available */}
-              <RecommendedRides currentUserId={"000000000000000000000000"} request={{ date: new Date().toISOString(), startTime: '08:30', beginLocation: { lat: 37.77, long: -122.42 }, finalLocation: { lat: 37.79, long: -122.39 } }} />
+              {/* Show schedule-based recommendations automatically when logged in */}
+              {isLoggedIn ? (
+                <RecommendedRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} request={{ date: new Date().toISOString(), startTime: '08:30', beginLocation: { lat: 37.77, long: -122.42 }, finalLocation: { lat: 37.79, long: -122.39 } }} mode={'schedules'} />
+              ) : (
+                <p className="text-gray-600 text-lg">Sign in to see suggested drivers near your schedule.</p>
+              )}
             </div>
           </div>
         </div>
 
         <div className={`lg:col-span-1 flex flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
-          <button className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
+          <button onClick={() => { setIsRequestOpen(true); setRequestResults(null); }} className="buttons group w-52 h-52 flex items-center justify-center text-white font-bold text-xl transform rotate-45 shadow-2xl shadow-purple-500/40 hover:shadow-purple-400/60 hover:scale-105 transition-all duration-300 ease-in-out my-auto rounded-2xl">
             <span className="transform -rotate-45 text-center flex flex-col items-center gap-2">
               <PlusCircleIcon className="w-8 h-8 transition-transform duration-300 group-hover:rotate-90" />
               Request a Ride
@@ -79,6 +87,93 @@ const DashboardPage = () => {
             </span>
           </button>
         </div>
+
+        {/* Request Modal */}
+        {isRequestOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-xl font-bold mb-4">Request a Ride</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setSearchLoading(true);
+                const form = e.target as HTMLFormElement;
+                const fd = new FormData(form);
+                const beginLat = Number(fd.get('beginLat'));
+                const beginLong = Number(fd.get('beginLong'));
+                const finalLat = Number(fd.get('finalLat'));
+                const finalLong = Number(fd.get('finalLong'));
+                const date = fd.get('date') as string;
+                const startTime = fd.get('startTime') as string;
+                const finalTime = fd.get('finalTime') as string;
+
+                // call ride-mode recommendation
+                try {
+                  const res = await fetch('/api/recommendations', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ userId: (session as any)?.user?.id || (session as any)?.user?.email || '', mode: 'rides', date, startTime, beginLocation: { lat: beginLat, long: beginLong }, finalLocation: { lat: finalLat, long: finalLong } }),
+                  });
+                  const data = await res.json();
+                  const candidates = data.candidates || [];
+                  if (candidates.length) {
+                    setRequestResults(candidates);
+                  } else {
+                    // fallback: create a public request
+                    await fetch('/api/requests/public', {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ userId: (session as any)?.user?.id || (session as any)?.user?.email || '', beginLocation: { lat: beginLat, long: beginLong }, finalLocation: { lat: finalLat, long: finalLong }, date, startTime, finalTime }),
+                    });
+                    setRequestResults([]);
+                  }
+                } catch (err) {
+                  console.error(err);
+                } finally {
+                  setSearchLoading(false);
+                }
+              }}>
+                <div className="grid grid-cols-2 gap-2">
+                  <input name="beginLat" required placeholder="Begin lat" className="inputs" />
+                  <input name="beginLong" required placeholder="Begin long" className="inputs" />
+                  <input name="finalLat" required placeholder="Final lat" className="inputs" />
+                  <input name="finalLong" required placeholder="Final long" className="inputs" />
+                </div>
+                <input type="date" name="date" defaultValue={new Date().toISOString().slice(0,10)} className="inputs mt-2" />
+                <input name="startTime" placeholder="08:30" className="inputs mt-2" />
+                <input name="finalTime" placeholder="09:00" className="inputs mt-2" />
+                <div className="flex justify-end gap-2 mt-4">
+                  <button type="button" onClick={() => setIsRequestOpen(false)} className="px-4 py-2 border rounded">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">{searchLoading ? 'Searching...' : 'Search'}</button>
+                </div>
+              </form>
+
+              {requestResults && requestResults.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold">Matches</h4>
+                  <ul className="mt-2 space-y-2">
+                    {requestResults.map((c: any) => (
+                      <li key={c.rideId || c.id} className="p-2 border rounded">
+                        <div>{c.driver?.firstName || 'Driver'}</div>
+                        <div className="text-sm text-gray-600">Score: {(c.score ?? 0).toFixed?.(2)}</div>
+                        <div className="mt-2">
+                          <button className="px-3 py-1 bg-purple-600 text-white rounded" onClick={async () => {
+                            // send request to driver/ride
+                            await fetch('/api/recommendations/requestDriver', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ riderId: (session as any)?.user?.id || (session as any)?.user?.email || '', rideId: c.rideId, driverId: c.driver?._id, beginLocation: c.beginLocation || {}, finalLocation: c.finalLocation || {}, date: new Date().toISOString(), startTime: c.startTime || '', finalTime: c.endTime || '' }) });
+                            alert('Request sent');
+                            setIsRequestOpen(false);
+                          }}>Request</button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {requestResults && requestResults.length === 0 && (
+                <div className="mt-4 text-sm text-gray-600">No matches found — your request has been posted publicly for drivers to pick up.</div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className={`lg:col-span-1 bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex flex-col items-center ${animationClasses('300ms')}`}>
           <h2 className="text-2xl font-bold text-purple-800 mb-6 w-full text-center flex items-center justify-center gap-2"><UserIcon className="text-purple-600"/> Profile</h2>
