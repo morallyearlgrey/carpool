@@ -2,7 +2,6 @@
 // yup aoisdfh
 // qwekjfhg
 
-
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
@@ -189,7 +188,7 @@ const DashboardPage = () => {
         {/* LEFT COLUMN */}
         <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
           <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
-          {session?.user?.id && <MyRequests currentUserId={session.user.id} />}
+          {session?.user?.id && <MyRequests currentUserId={session.user.id} />} || {<>hi</>}
         </div>
 
         {/* MIDDLE COLUMN */}
