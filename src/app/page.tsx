@@ -72,16 +72,18 @@ export default function Home() {
             }`}
             style={{ transitionDelay: "200ms" }}
           >
-            <span
-              className={`transition-opacity duration-300 inline-block mr-4 sm:mr-4 ${
-                fade ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {words[currentWordIndex]}
-            </span>
-            <span className="inline-block text-[#3a3a5a] text-shadow">
+            <div className="block">
+              <span
+                className={`transition-opacity duration-300 inline-block mr-4 ${
+                  fade ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {words[currentWordIndex]}
+              </span>
+            </div>
+            <div className="block text-[#3a3a5a] text-shadow">
               commuting
-            </span>
+            </div>
           </h1>
 
           {/* Paragraph */}
