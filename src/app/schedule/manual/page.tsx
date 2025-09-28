@@ -44,6 +44,9 @@ export default function ManualSchedulePage(){
 	const [localDuration, setLocalDuration] = useState<number>(30); // minutes
 	const [localBegin, setLocalBegin] = useState<{ lat?: number; lng?: number; description?: string } | null>(null);
 	const [localFinal, setLocalFinal] = useState<{ lat?: number; lng?: number; description?: string } | null>(null);
+	// Add states for displaying address values when editing
+	const [beginAddressValue, setBeginAddressValue] = useState<string>('');
+	const [finalAddressValue, setFinalAddressValue] = useState<string>('');
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
@@ -197,6 +200,11 @@ export default function ManualSchedulePage(){
 
 		addOrUpdateSlotForDay(selectedDayIndex, slot, editingSlotIndex);
 		setEditingSlotIndex(null);
+		// Clear the form after saving
+		setBeginAddressValue('');
+		setFinalAddressValue('');
+		setLocalBegin(null);
+		setLocalFinal(null);
 		setMessage(`Saved ${day} slot`);
 	}
 
@@ -279,6 +287,9 @@ export default function ManualSchedulePage(){
 									setLocalDuration(first && first.endTime ? timeDiffMinutes(first.startTime, first.endTime) : 30);
 									setLocalBegin(first?.beginLat ? { lat: first.beginLat, lng: first.beginLng ?? undefined, description: first.beginAddress } : null);
 									setLocalFinal(first?.finalLat ? { lat: first.finalLat, lng: first.finalLng ?? undefined, description: first.finalAddress } : null);
+									// Reset address input values
+									setBeginAddressValue(first?.beginAddress || '');
+									setFinalAddressValue(first?.finalAddress || '');
 								}}
 								className={`px-3 py-1 rounded ${selectedDayIndex===idx ? 'bg-purple-600 text-white' : 'bg-white border'}`}
 							>
@@ -301,15 +312,25 @@ export default function ManualSchedulePage(){
 								<div>
 									<label className="block text-sm mb-1">From</label>
 									<PlacesAutocomplete
-										onAddressSelect={({ lat, lng, description }) => setLocalBegin({ lat, lng, description })}
+										onAddressSelect={({ lat, lng, description }) => {
+											setLocalBegin({ lat, lng, description });
+											setBeginAddressValue(description);
+										}}
 										placeholder="Start address"
+										value={beginAddressValue}
+										onValueChange={setBeginAddressValue}
 									/>
 								</div>
 								<div>
 									<label className="block text-sm mb-1">To</label>
 									<PlacesAutocomplete
-										onAddressSelect={({ lat, lng, description }) => setLocalFinal({ lat, lng, description })}
+										onAddressSelect={({ lat, lng, description }) => {
+											setLocalFinal({ lat, lng, description });
+											setFinalAddressValue(description);
+										}}
 										placeholder="End address"
+										value={finalAddressValue}
+										onValueChange={setFinalAddressValue}
 									/>
 								</div>
 							</div>
@@ -352,6 +373,9 @@ export default function ManualSchedulePage(){
 													setLocalDuration(Math.max(15, timeDiffMinutes(ss.startTime, ss.endTime)));
 													setLocalBegin(ss.beginLat ? { lat: ss.beginLat, lng: ss.beginLng ?? undefined, description: ss.beginAddress } : null);
 													setLocalFinal(ss.finalLat ? { lat: ss.finalLat, lng: ss.finalLng ?? undefined, description: ss.finalAddress } : null);
+													// Populate address input values for editing
+													setBeginAddressValue(ss.beginAddress || '');
+													setFinalAddressValue(ss.finalAddress || '');
 												}} className="text-xs text-blue-600">Edit</button>
 												<button onClick={() => removeSlotForDay(selectedDayIndex, si)} className="text-xs text-red-600">Remove</button>
 											</div>
