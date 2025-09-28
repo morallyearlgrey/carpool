@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Script from 'next/script';
 
 interface MapComponentProps {
@@ -28,7 +28,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
     });
   };
 
-  const initMap = () => {
+  const initMap = useCallback(() => {
+    // avoid double-init
+    if (directionsRendererRef.current) return;
     if (!mapRef.current) return;
 
     const googleMap = new google.maps.Map(mapRef.current, {
@@ -166,7 +168,24 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         }
       });
     }
-  };
+  }, [onRouteSelected]);
+
+  // If the Google Maps script is already present (e.g. loaded by another component),
+  // initialize the map on mount. This helps with client-side route transitions.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const win = window as typeof window & {
+      google?: typeof google;
+    };
+    if (win.google && win.google.maps && win.google.maps.places) {
+      // Defer slightly to ensure DOM refs are ready
+      setTimeout(() => {
+        try { initMap(); } catch {
+          /* ignore init errors */
+        }
+      }, 0);
+    }
+  }, [initMap]);
 
   return (
     <>
