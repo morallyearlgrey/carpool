@@ -5,6 +5,14 @@ import { useSession, signOut } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 
+interface ExtendedUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}
+
 export default function App() {
 
   const { data: session, status } = useSession();
@@ -25,7 +33,7 @@ export default function App() {
       <main className="flex-grow flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-[#f7f5fc] p-8 rounded-3xl shadow-lg flex flex-col items-center">
           <h2 className="text-3xl font-bold text-center mb-8">
-            Welcome {isLoggedIn ? `${session.user.firstName} ${session.user.lastName}` : "Guest"}
+            Welcome {isLoggedIn && session?.user ? `${(session.user as ExtendedUser)?.firstName || ''} ${(session.user as ExtendedUser)?.lastName || ''}`.trim() || 'User' : "Guest"}
           </h2>
 
           {isLoggedIn && (

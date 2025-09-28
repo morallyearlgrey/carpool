@@ -1,10 +1,45 @@
-import NextAuth, { AuthOptions } from "next-auth";
+import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import clientPromise from "@/lib/mongodb";
 
+// Type definitions for NextAuth callbacks
+interface ExtendedJWT {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  sub?: string;
+  name?: string;
+  email?: string;
+  picture?: string;
+  iat?: number;
+  exp?: number;
+  jti?: string;
+}
+
+interface ExtendedUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  name?: string;
+  image?: string;
+}
+
+interface ExtendedSession {
+  user?: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+  expires: string;
+}
+
 // NextAuth configuration
-export const authOptions: AuthOptions = {
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -34,7 +69,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
@@ -42,28 +77,33 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     // Add user info to JWT
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: unknown; user?: unknown }) {
+      const typedToken = token as ExtendedJWT;
       if (user) {
-        token.id = user.id;
-        token.firstName = user.firstName;
-        token.lastName = user.lastName;
+        const typedUser = user as ExtendedUser;
+        typedToken.id = typedUser.id;
+        typedToken.firstName = typedUser.firstName;
+        typedToken.lastName = typedUser.lastName;
       }
-      return token;
+      return typedToken as unknown;
     },
     // Make JWT data available in session
-    async session({ session, token }) {
-  if (token.id) {
-    session.user = {
-      ...session.user,
-      id: token.id as string,
-      firstName: token.firstName ?? "",
-      lastName: token.lastName ?? "",
-    };
-  }
-  return session;
-},
+    async session({ session, token }: { session: unknown; token: unknown }) {
+      const typedToken = token as ExtendedJWT;
+      const typedSession = session as ExtendedSession;
+      
+      if (typedToken.id) {
+        typedSession.user = {
+          ...typedSession.user,
+          id: typedToken.id,
+          firstName: typedToken.firstName ?? "",
+          lastName: typedToken.lastName ?? "",
+        };
+      }
+      return typedSession;
+    },
   },
 };
 
-const handler = NextAuth(authOptions);
+const handler = NextAuth(authOptions as never);
 export { handler as GET, handler as POST };
