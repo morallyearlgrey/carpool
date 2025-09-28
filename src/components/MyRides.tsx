@@ -142,10 +142,18 @@ function MyRidesList({ currentUserId }: { currentUserId: string }) {
               {r.startTime} — {r.finalTime}
             </div>
             <div className="text-sm text-gray-600 mt-1">
-              Riders: {r.riders
-                .map((ri) => ri.user && typeof ri.user === "object" ? ri.user.firstName : "Unknown")
-                .join(", ")}
-            </div>
+  Riders: {r.riders
+    .map((ri) => {
+      if (ri.user && typeof ri.user === "object" && "firstName" in ri.user) {
+        return ri.user.firstName;
+      }
+      return "Unknown";
+    })
+    .join(", ")}
+</div>
+
+
+
 
           </li>
         ))}

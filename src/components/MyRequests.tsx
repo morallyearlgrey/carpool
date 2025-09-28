@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback } from "react";
 
 interface Request {
   _id: string;
-  user: any;
-  driver?: any;
+  requestSender: any;
+  requestReceiver?: any;
   beginLocation: { lat: number; long: number };
   finalLocation: { lat: number; long: number };
   date: Date;
@@ -133,11 +133,12 @@ function RequestsList({ type, userId }: RequestsListProps) {
           >
             <div className="font-semibold text-lg">
               {type === "incoming"
-                ? r.user?.firstName || "Rider"
+                ? r.requestSender?.firstName || "Rider"
                 : type === "outgoing"
-                ? `To: ${r.driver?.firstName || "Driver"}`
-                : r.user?.firstName || "Rider"}
+                ? `To: ${r.requestReceiver?.firstName || "Driver"}`
+                : r.requestSender?.firstName || "Rider"}
             </div>
+
             <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
 
             <div className="mt-2 flex gap-2">
