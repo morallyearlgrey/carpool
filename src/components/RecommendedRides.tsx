@@ -81,7 +81,7 @@ export default function RecommendedRides({ currentUserId, request, mode = 'rides
               <td className="p-2">{c.seatsLeft ?? '-'}</td>
               <td className="p-2">{(c.score ?? 0).toFixed?.(2)}</td>
               <td className="p-2">
-                <button disabled={!!sending} className="bg-purple-600 text-white px-3 py-1 rounded" onClick={() => sendRequest(c.rideId, c.driver?._id)}>
+                <button disabled={!!sending} className="bg-[#6c62fe] text-white px-3 py-1 rounded" onClick={() => sendRequest(c.rideId, c.driver?._id)}>
                   {sending === (c.rideId || c.driver?._id) ? 'Sending...' : 'Request'}
                 </button>
               </td>

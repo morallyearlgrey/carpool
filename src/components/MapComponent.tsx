@@ -59,20 +59,34 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
 
     // Info box for drive time & distance
     const infoBox = document.createElement('div');
-    infoBox.className =
-      'bg-white p-4 rounded-xl shadow-lg font-bold text-gray-800 text-lg min-w-[150px] text-center';
-    googleMap.controls[google.maps.ControlPosition.TOP_LEFT].push(infoBox);
-    infoBoxRef.current = infoBox;
+        infoBox.className =
+          'bg-white p-4 rounded-xl shadow-lg font-bold text-gray-800 text-lg min-w-[150px] text-center';
+        googleMap.controls[google.maps.ControlPosition.TOP_LEFT].push(infoBox);
+        infoBoxRef.current = infoBox;
 
-    const updateInfoBox = (directions?: google.maps.DirectionsResult) => {
+        const updateInfoBox = (directions?: google.maps.DirectionsResult) => {
       if (!infoBoxRef.current) return;
+
       if (!directions || directions.routes.length === 0) {
         infoBoxRef.current.innerText = '';
         return;
       }
+
       const leg = directions.routes[0].legs[0];
       infoBoxRef.current.innerText = `${leg.duration?.text} (${leg.distance?.text})`;
+
+      // Pass duration (in seconds) to parent
+      if (onRouteSelected) {
+        onRouteSelected(
+          {
+            start: { latLng: markersRef.current[0].getPosition()!, address: startAddress },
+            end: { latLng: markersRef.current[1].getPosition()!, address: endAddress },
+          },
+          leg.duration?.value // seconds
+        );
+      }
     };
+
 
     const drawRoute = (start: google.maps.LatLng, end: google.maps.LatLng) => {
       const directionsService = new google.maps.DirectionsService();
@@ -224,7 +238,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         strategy="afterInteractive"
         onLoad={initMap}
       />
-      <div ref={mapRef} className="w-full h-[500px] rounded-md border border-white" />
+      <div ref={mapRef} className="w-full h-full rounded-md" />
     </>
   );
 };
