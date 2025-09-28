@@ -4,10 +4,10 @@ import RequestModel from '@/lib/models/request';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await RequestModel.findByIdAndDelete(id);
     return NextResponse.json({ success: true });
   } catch (err) {

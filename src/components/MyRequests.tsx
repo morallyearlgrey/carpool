@@ -14,6 +14,8 @@ interface User {
 
 interface Request {
   _id: string;
+  requestSender?: User;
+  requestReceiver?: User;
   user: User | string;
   driver?: User;
   beginLocation: { lat: number; long: number };
@@ -144,7 +146,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
       {!loading && items && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
       {items && items.length > 0 && (
         <ul className="space-y-2 mt-2">
-          {items.map((r: any) => (
+          {items.map((r: Request) => (
             <li key={r._id} className="p-2 border rounded">
               <div className="font-semibold">
                 {type === "incoming"

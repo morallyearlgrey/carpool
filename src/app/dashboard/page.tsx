@@ -12,21 +12,22 @@ import { Navbar } from '@/components/navbar';
 // Dynamically import MapComponent so it only renders on the client
 const MapComponent = dynamic(() => import('@/components/MapComponent'), { ssr: false });
 
-// --- SVG Icons ---
-const BellIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-  </svg>
-);
+interface SessionUser {
+  id?: string;
+  email?: string;
+}
 
-const RouteIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="6" cy="19" r="3" />
-    <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H13" />
-    <circle cx="18" cy="5" r="3" />
-  </svg>
-);
+interface ExtendedSession {
+  user?: SessionUser;
+}
+
+interface CandidateRide {
+  _id?: string;
+}
+
+// --- SVG Icons ---
+
+
 
 const PlusCircleIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -58,7 +59,7 @@ const DashboardPage = () => {
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [rideMode, setRideMode] = useState<'request' | 'offer'>('request'); // track which button was clicked
   const [searchLoading, setSearchLoading] = useState(false);
-  const [requestResults, setRequestResults] = useState<any[] | null>(null);
+  const [requestResults, setRequestResults] = useState<CandidateRide[] | null>(null);
 
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
@@ -68,7 +69,7 @@ const DashboardPage = () => {
     setShowComponent(true);
   }, []);
 
-  const animationClasses = (delay: string) =>
+  const animationClasses = () =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   const handleOpenRideForm = (mode: 'request' | 'offer') => {
@@ -97,7 +98,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+          userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
           mode: 'rides',
           date,
           startTime,
@@ -119,7 +120,7 @@ const DashboardPage = () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+            userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
             beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
             finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
             date,
@@ -159,7 +160,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+          userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
           beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
           finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
           date,
@@ -186,21 +187,22 @@ const DashboardPage = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* LEFT COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
-          <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
-          {session?.user?.id && <MyRequests currentUserId={session.user.id} />}
+        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses()}`}>
+          <MyRides currentUserId={(session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || ''} />
+          {(session as ExtendedSession)?.user?.id && <MyRequests currentUserId={(session as ExtendedSession).user!.id!} />}
         </div>
 
         {/* MIDDLE COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
+        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses()}`}>
           {isRequestOpen ? (
             <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
               {/* X Close Button */}
               <button
                 onClick={() => {
                   if (currentRideId) {
-                    if (rideMode === 'request') handleRequestDelete(currentRideId);
-                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
+                    // TODO: Implement request/offer deletion
+                    // if (rideMode === 'request') handleRequestDelete(currentRideId);
+                    // else if (rideMode === 'offer') handleOfferDelete(currentRideId);
                   } else {
                     setIsRequestOpen(false);
                   }
@@ -303,7 +305,7 @@ const DashboardPage = () => {
 
 
         {/* RIGHT COLUMN: Map */}
-        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
+        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses()}`}>
           {showComponent ? (<MapComponent
             onRouteSelected={(route) => {
               setStart(route.start);
