@@ -17,7 +17,6 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const registerSchema = z.object({
@@ -48,10 +47,9 @@ const genders = [
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() { 
-      const { data: session, status } = useSession();
+      const { status } = useSession();
         const isLoggedIn = status === "authenticated";
         
-    const [error, setError] = useState("");
     const [hasVehicle, setHasVehicle] = useState(false);
     const router = useRouter();
 
@@ -100,8 +98,8 @@ export default function RegisterPage() {
             // On success, send the new user to the schedule maker page
             router.push("/schedule");
         }
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            console.error('Registration error:', err);
         }
 
     }

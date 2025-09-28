@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import MyRides from '@/components/MyRides';
-import MyRequests from '@/components/MyRequests';
+import RecommendedRides from '@/components/RecommendedRides';
 import { Navbar } from '@/components/navbar';
 
 // Dynamically import MapComponent so it only renders on the client
@@ -48,7 +47,6 @@ const CarIcon = ({ className }: { className?: string }) => (
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
-  const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
   const [showComponent, setShowComponent] = useState(false);
 
@@ -56,7 +54,7 @@ const DashboardPage = () => {
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [rideMode, setRideMode] = useState<'request' | 'offer'>('request'); // track which button was clicked
   const [searchLoading, setSearchLoading] = useState(false);
-  const [requestResults, setRequestResults] = useState<any[] | null>(null);
+  const [requestResults, setRequestResults] = useState<Array<Record<string, unknown>> | null>(null);
 
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
@@ -66,7 +64,7 @@ const DashboardPage = () => {
     setShowComponent(true);
   }, []);
 
-  const animationClasses = (delay: string) =>
+  const animationClasses = () =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   const handleOpenRideForm = (mode: 'request' | 'offer') => {
@@ -95,6 +93,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
           mode: 'rides',
           date,
@@ -106,17 +105,16 @@ const DashboardPage = () => {
 
       const data = await res.json();
       const candidates = data.candidates || [];
-      let rideId: string | null = null;
 
       if (candidates.length > 0) {
         setRequestResults(candidates);
-        rideId = candidates[0]?._id || null;
       } else {
         // No matches → post publicly
         const publicRes = await fetch('/api/requests/public', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
             beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
             finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
@@ -126,18 +124,18 @@ const DashboardPage = () => {
           }),
         });
 
-        const publicData = await publicRes.json();
-        rideId = publicData.requestId;
+        await publicRes.json();
         setRequestResults([]);
       }
+      alert("Your ride request has been submitted successfully!");
 
-      setCurrentRideId(rideId);
     } catch (err) {
       console.error(err);
       alert('Error sending request. Please try again.');
     } finally {
       setSearchLoading(false);
     }
+    setIsRequestOpen(false)
   };
 
   // Handle submitting a ride offer
@@ -157,6 +155,7 @@ const DashboardPage = () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
           beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
           finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
@@ -166,8 +165,7 @@ const DashboardPage = () => {
         }),
       });
 
-      const data = await res.json();
-      setCurrentRideId(data.offer?._id || null);
+      await res.json();
       setRequestResults([]);
     } catch (err) {
       console.error(err);
@@ -175,6 +173,8 @@ const DashboardPage = () => {
     } finally {
       setSearchLoading(false);
     }
+    alert("Your offer has been successfully posted!")
+    setIsRequestOpen(false)
   };
 
 
@@ -184,24 +184,48 @@ const DashboardPage = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* LEFT COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
-          <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
-          {session?.user?.id && <MyRequests currentUserId={session.user.id} />}
+        <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses()}`}>
+          <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
+            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
+              <BellIcon className="text-[#3a3a5a]" /> Upcoming Rides
+            </h2>
+            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] flex p-4">
+              <p className="text-gray-600 text-lg">No upcoming rides scheduled.</p>
+            </div>
+          </div>
+
+          <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
+            <h2 className="text-2xl font-bold text-[#3a3a5a] mb-4 flex items-center gap-2">
+              <RouteIcon className="text-[#3a3a5a]" /> Suggested Rides
+            </h2>
+            <div className="bg-white bg-opacity-70 rounded-lg min-h-[180px] p-4">
+              {isLoggedIn ? (
+                <RecommendedRides
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''}
+                  request={{
+                    date: new Date().toISOString(),
+                    startTime: '08:30',
+                    beginLocation: { lat: 37.77, long: -122.42 },
+                    finalLocation: { lat: 37.79, long: -122.39 },
+                  }}
+                  mode={'schedules'}
+                />
+              ) : (
+                <p className="text-gray-600 text-lg">Sign in to see suggested drivers near your schedule.</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* MIDDLE COLUMN */}
-        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses('200ms')}`}>
+        <div className={`lg:col-span-1 flex p-6 flex-col items-center gap-8 h-full ${animationClasses()}`}>
           {isRequestOpen ? (
             <div className="relative bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 w-full flex-grow">
               {/* X Close Button */}
               <button
                 onClick={() => {
-                  if (currentRideId) {
-                    if (rideMode === 'request') handleRequestDelete(currentRideId);
-                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
-                  } else {
-                    setIsRequestOpen(false);
-                  }
+                  setIsRequestOpen(false)
                 }}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >
@@ -301,7 +325,7 @@ const DashboardPage = () => {
 
 
         {/* RIGHT COLUMN: Map */}
-        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses('300ms')}`}>
+        <div className={`lg:col-span-1 w-full h-[600px] rounded-md pr-5 ${animationClasses()}`}>
           {showComponent ? (<MapComponent
             onRouteSelected={(route) => {
               setStart(route.start);

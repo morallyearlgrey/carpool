@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     await user.save();
 
     return NextResponse.json({ ok: true, requestId: newRequest._id });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
     return NextResponse.json({ error: 'server error' }, { status: 500 });
   }

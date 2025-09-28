@@ -5,8 +5,28 @@ interface MyRequestsProps {
   currentUserId: string; // use string, not ObjectId
 }
 
-export default function MyRequests({ currentUserId }: MyRequestsProps) {
-  const [tab, setTab] = useState<"incoming" | "outgoing">("incoming");
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface Request {
+  _id: string;
+  user: User | string;
+  driver?: User;
+  beginLocation: { lat: number; long: number };
+  finalLocation: { lat: number; long: number };
+  date: Date;
+  startTime: string;
+  finalTime: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+function MyRequests() {
+  const [tab, setTab] = useState<'incoming'|'outgoing'>('incoming');
 
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
@@ -34,16 +54,54 @@ export default function MyRequests({ currentUserId }: MyRequestsProps) {
   );
 }
 
-interface RequestsListProps {
-  type: "incoming" | "outgoing";
-  userId: string;
-}
+function IncomingRequests(){
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<Request[] | null>(null);
+
+  async function load(){
+    setLoading(true);
+    try{
+      const res = await fetch('/api/requests/incoming');
+      const data = await res.json();
+      setItems(data.requests || []);
+    }catch(err){
+      console.error(err);
+      setItems([]);
+    }finally{setLoading(false)}
+  }
+
+  React.useEffect(() => {
+    // initial load
+    load();
+    // poll every 15s
+    const iv = setInterval(load, 15000);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div>
+      <div className="mb-2 text-sm text-gray-500">Automatically refreshes every 15s</div>
+      {loading && <div>Loading...</div>}
+      {items && items.length === 0 && <div className="text-sm text-gray-600">No incoming requests.</div>}
+      {items && items.length > 0 && (
+        <ul className="space-y-2 mt-2">
+          {items.map(r => (
+            <li key={r._id} className="p-2 border rounded">
+              <div className="font-semibold">{typeof r.user === 'object' ? r.user.firstName : 'Rider'}</div>
+              <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+
 
 function RequestsList({ type, userId }: RequestsListProps) {
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<any[]>([]);
-
-  async function load() {
+  const [items, setItems] = useState<Request[] | null>(null);
+  async function load(){
+      
     if (!userId) return;
     setLoading(true);
     try {
@@ -104,3 +162,5 @@ function RequestsList({ type, userId }: RequestsListProps) {
     </div>
   );
 }
+
+export default MyRequests;

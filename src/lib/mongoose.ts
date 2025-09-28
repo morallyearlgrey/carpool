@@ -7,13 +7,12 @@ if (!MONGODB_URI) {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var _mongoosePromise: Promise<typeof mongoose> | undefined;
 }
 
 if (!global._mongoosePromise) {
   // create the promise once in the global scope (works for serverless)
-  global._mongoosePromise = mongoose.connect(MONGODB_URI || '').then(m => {
+  global._mongoosePromise = mongoose.connect(MONGODB_URI || '').then(() => {
     console.debug('mongoose connected');
     return mongoose;
   }).catch(err => {

@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     // If neither rideId nor driverId provided, return success but warn
     return NextResponse.json({ ok: true, requestId: newRequest._id, warning: 'no rideId or driverId attached; request stored standalone' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
     return NextResponse.json({ error: 'server error' }, { status: 500 });
   }

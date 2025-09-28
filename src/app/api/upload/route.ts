@@ -11,7 +11,9 @@ function initializeGemini() {
 
 export async function POST(request: NextRequest) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const session = await getServerSession(authOptions as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (session as any)?.user?.id;
 
     if (!userId) {
@@ -52,13 +54,17 @@ export async function POST(request: NextRequest) {
     const analysis = await result.response.text();
 
     // --- CLEAN AND FIX GEMINI JSON ---
-    let cleanedResponse = analysis.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
-    const arrayMatch = cleanedResponse.match(/"availableTimes"\s*:\s*\[([\s\S]*)\]/);
+    const cleanedResponse = analysis
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const arrayContent = cleanedResponse.match(/\[([\s\S]*?)\]/);
 
     let parsedSchedule;
-    if (arrayMatch) {
-      let arrayContent = arrayMatch[1].replace(/,\s*{[^}]*$/, ''); // remove incomplete last object
-      const fixedJson = `{"availableTimes":[${arrayContent}]}`;
+    if (arrayContent) {
+      const arrayContentString = arrayContent[1].replace(/,\s*{[^}]*$/, ''); // remove incomplete last object
+      const fixedJson = `{"availableTimes":[${arrayContentString}]}`;
 
       try {
         parsedSchedule = JSON.parse(fixedJson);
@@ -101,11 +107,8 @@ export async function POST(request: NextRequest) {
       message: 'Image analyzed and schedule saved successfully',
       schedule: savedSchedule.schedule,
     });
-  } catch (err: any) {
-    console.error('Upload API Error:', err);
-    return NextResponse.json(
-      { error: 'Failed to analyze image. Please try again.', details: process.env.NODE_ENV === 'development' ? err.message : undefined },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    console.error(err);
+    return NextResponse.json({ error: 'server error' }, { status: 500 });
   }
 }

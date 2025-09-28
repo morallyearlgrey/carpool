@@ -1,13 +1,22 @@
-"use client";
+"use client"; // This line tells Next.js to render this component on the client
+
 import React from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 
 export default function App() {
+
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
-
+ 
+        /**
+   * Handles the click event for the gender selection buttons.
+   * Toggles the selection: if the clicked gender is already selected, it deselects it.
+   * Otherwise, it sets the new gender as selected.
+   * @param {'F' | 'M'} gender - The gender to be selected.
+   */
+    // Gender select handler removed as it was unused
 
   return (
     <div className="min-h-screen font-sans text-[#663399] flex flex-col">

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import clientPromise from '@/lib/mongodb';
 import mongooseConnect from '@/lib/mongoose';
 import Schedule from '@/lib/models/schedule';
 import User from '@/lib/models/user';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+
+interface ExtendedSession {
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,8 +24,8 @@ export async function POST(req: NextRequest) {
   const { availableTimes } = body;
 
     // authenticate server-side and derive userId from session
-    const session = await getServerSession(authOptions as any);
-    const userId = (session as any)?.user?.id;
+    const session = await getServerSession(authOptions) as ExtendedSession | null;
+    const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ error: 'not authenticated' }, { status: 401 });
     }
@@ -56,9 +64,26 @@ export async function POST(req: NextRequest) {
     const created = await Schedule.create({ user: userId, availableTimes });
     await User.findByIdAndUpdate(userId, { schedule: created._id });
     return NextResponse.json({ ok: true, schedule: created });
-  } catch (err: any) {
-    console.error('Error in /api/schedule:', err?.message || err, err?.stack ? err.stack.split('\n').slice(0,3).join('\n') : undefined);
-    const detail = process.env.NODE_ENV === 'production' ? 'server error' : (err?.message || String(err));
-    return NextResponse.json({ error: detail }, { status: 500 });
+  } catch (err: unknown) {
+    console.error(err);
+    return NextResponse.json({ error: 'server error' }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    await clientPromise;
+    await mongooseConnect;
+    const session = await getServerSession(authOptions) as ExtendedSession | null;
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'not authenticated' }, { status: 401 });
+
+    const existing = await Schedule.findOne({ user: userId });
+    if (!existing) return NextResponse.json({ ok: true, schedule: null });
+    return NextResponse.json({ ok: true, schedule: existing });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'server error';
+    console.error('Error in GET /api/schedule:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
