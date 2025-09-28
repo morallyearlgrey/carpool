@@ -2,13 +2,20 @@
 import { NextResponse } from 'next/server';
 import RequestModel from '@/lib/models/request';
 import OfferModel from '@/lib/models/offer';
+import UserModel from '@/lib/models/user';
+import RideModel from '@/lib/models/ride';
 
 export async function GET() {
   try {
-    const requests = await RequestModel.find().lean();
-    const offers = await OfferModel.find().lean();
-    
-    return NextResponse.json({ requests, offers });
+    // Fetch all collections
+    const [requests, offers, users, rides] = await Promise.all([
+      RequestModel.find().lean(),
+      OfferModel.find().lean(),
+      UserModel.find().lean(),
+      RideModel.find().lean(),
+    ]);
+
+    return NextResponse.json({ requests, offers, users, rides });
   } catch (err) {
     console.error('Debug fetch error:', err);
     return NextResponse.json({ error: 'server error' }, { status: 500 });

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Knightpool",
   description: "Where carpools are made.",
   icons: {
-    icon: '/favicon.ico', 
+    icon: '/favicon.png', 
   },
 };
 

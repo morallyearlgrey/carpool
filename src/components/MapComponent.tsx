@@ -51,27 +51,60 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
     return marker;
   }, []);
 
-  // Handle route calculation and display
-  const calculateAndDisplayRoute = useCallback((start: google.maps.LatLng, end: google.maps.LatLng) => {
-    if (!directionsRendererRef.current) return;
+    // Info box for drive time & distance
+    const infoBox = document.createElement('div');
+        infoBox.className =
+          'bg-white p-4 rounded-xl shadow-lg font-bold text-gray-800 text-lg min-w-[150px] text-center';
+        googleMap.controls[google.maps.ControlPosition.TOP_LEFT].push(infoBox);
+        infoBoxRef.current = infoBox;
 
-    const directionsService = new google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === 'OK' && result) {
-          directionsRendererRef.current?.setDirections(result);
-          
-          // Reverse geocode and trigger callback
-          geocodeLatLng(start, (startAddr) => {
-            geocodeLatLng(end, (endAddr) => {
-              onRouteSelected?.({
-                start: { latLng: start, address: startAddr },
-                end: { latLng: end, address: endAddr },
+        const updateInfoBox = (directions?: google.maps.DirectionsResult) => {
+      if (!infoBoxRef.current) return;
+
+      if (!directions || directions.routes.length === 0) {
+        infoBoxRef.current.innerText = '';
+        return;
+      }
+
+      const leg = directions.routes[0].legs[0];
+      infoBoxRef.current.innerText = `${leg.duration?.text} (${leg.distance?.text})`;
+
+      // Pass duration (in seconds) to parent
+      if (onRouteSelected) {
+        onRouteSelected(
+          {
+            start: { latLng: markersRef.current[0].getPosition()!, address: startAddress },
+            end: { latLng: markersRef.current[1].getPosition()!, address: endAddress },
+          },
+          leg.duration?.value // seconds
+        );
+      }
+    };
+
+
+    const drawRoute = (start: google.maps.LatLng, end: google.maps.LatLng) => {
+      const directionsService = new google.maps.DirectionsService();
+      directionsService.route(
+        {
+          origin: start,
+          destination: end,
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === 'OK' && result) {
+            directionsRenderer.setDirections(result);
+            updateInfoBox(result);
+            if (markersRef.current.length === 2) {
+              const [startMarker, endMarker] = markersRef.current;
+              geocodeLatLng(startMarker.getPosition()!, (startAddr) => {
+                geocodeLatLng(endMarker.getPosition()!, (endAddr) => {
+                  setStartAddress(startAddr);
+                  setEndAddress(endAddr);
+                  onRouteSelected?.({
+                    start: { latLng: startMarker.getPosition()!, address: startAddr },
+                    end: { latLng: endMarker.getPosition()!, address: endAddr },
+                  });
+                });
               });
             });
           });
@@ -184,15 +217,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         className="w-full h-96 border border-gray-300 rounded-md"
         style={{ minHeight: '400px' }}
       />
-
-      {/* Google Maps Script */}
-      {typeof window !== 'undefined' && (
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          onLoad={handleScriptLoad}
-        />
-      )}
-    </div>
+      <div ref={mapRef} className="w-full h-full rounded-md" />
+    </>
   );
 };
 
