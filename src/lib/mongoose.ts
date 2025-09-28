@@ -1,24 +1,29 @@
-import mongoose from 'mongoose';
+// lib/mongoose.ts
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI as string;
+
 if (!MONGODB_URI) {
-  // throw here would break builds; log instead and let callers handle
-  console.warn('MONGODB_URI not set');
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 
-declare global {
-  var _mongoosePromise: Promise<typeof mongoose> | undefined;
+let cached = (global as any).mongoose;
+
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-if (!global._mongoosePromise) {
-  // create the promise once in the global scope (works for serverless)
-  global._mongoosePromise = mongoose.connect(MONGODB_URI || '').then(() => {
-    console.debug('mongoose connected');
-    return mongoose;
-  }).catch(err => {
-    console.error('mongoose connect error', err && err.message ? err.message : err);
-    throw err;
-  });
+async function mongooseConnect() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    }).then((m) => m);
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+
 }
 
-export default global._mongoosePromise;
+export default mongooseConnect;

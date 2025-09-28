@@ -17,12 +17,12 @@ const requestSchema = new mongoose.Schema({
   startTime: { type: String, required: true }, // e.g., "08:30"
   finalTime: { type: String, required: true }, // e.g., "09:15"
 
-  // // Status tracking
-  // status: { 
-  //   type: String, 
-  //   enum: ["pending", "accepted", "rejected", "cancelled"], 
-  //   default: "pending" 
-  // },
+  // Status tracking: pending | accepted | rejected | cancelled
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "rejected", "cancelled"],
+    default: "pending",
+  },
 
 
 }, { timestamps: true });

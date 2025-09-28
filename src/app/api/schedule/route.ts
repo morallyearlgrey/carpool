@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   try {
   // ensure DB client and mongoose are initialized
   await clientPromise;
-  await mongooseConnect;
+  await mongooseConnect();
     const body = await req.json();
   const { availableTimes } = body;
 
