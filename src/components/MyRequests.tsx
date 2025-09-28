@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { initDriverNotifications } from "@/lib/driverNotifications";
 
 interface MyRequestsProps {
   currentUserId: string; // use string, not ObjectId
@@ -7,6 +8,13 @@ interface MyRequestsProps {
 
 export default function MyRequests({ currentUserId }: MyRequestsProps) {
   const [tab, setTab] = useState<"incoming" | "outgoing">("incoming");
+
+  // ✅ Register driver for push notifications on mount
+  useEffect(() => {
+    if (currentUserId) {
+      initDriverNotifications(currentUserId);
+    }
+  }, [currentUserId]);
 
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
