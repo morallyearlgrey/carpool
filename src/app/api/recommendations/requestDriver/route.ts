@@ -24,36 +24,23 @@ export async function POST(req: NextRequest) {
       finalTime,
     });
 
-    // Attach to rider's outgoingRequests
-    const rider = await User.findById(riderId);
-    if (!rider) return NextResponse.json({ error: "rider not found" }, { status: 404 });
-
-    rider.outgoingRequests = rider.outgoingRequests || [];
-    rider.outgoingRequests.push(newRequest._id);
-    await rider.save();
+  // Attach to rider's outgoingRequests using atomic update to avoid loading full user doc
+  const riderUpdate = await User.findByIdAndUpdate(riderId, { $push: { outgoingRequests: newRequest._id } });
+  if (!riderUpdate) return NextResponse.json({ error: "rider not found" }, { status: 404 });
 
     // If rideId provided, attach to ride.requestedRiders
     if (rideId) {
-      const ride = await Ride.findById(rideId);
-      if (!ride) return NextResponse.json({ error: "ride not found" }, { status: 404 });
-
-      ride.requestedRiders = ride.requestedRiders || [];
-      ride.requestedRiders.push(riderId);
-      await ride.save();
-
+      const rideUpdate = await Ride.findByIdAndUpdate(rideId, { $push: { requestedRiders: riderId } });
+      if (!rideUpdate) return NextResponse.json({ error: "ride not found" }, { status: 404 });
       return NextResponse.json({ ok: true, requestId: newRequest._id });
     }
 
     // If driverId provided, attach request to driver.incomingRequests
     if (driverId) {
-      const driver = await User.findById(driverId);
-      if (!driver) return NextResponse.json({ error: "driver not found" }, { status: 404 });
-
-      driver.incomingRequests = driver.incomingRequests || [];
+      const driverUpdate = await User.findByIdAndUpdate(driverId, { $push: { incomingRequests: newRequest._id } });
+      if (!driverUpdate) return NextResponse.json({ error: "driver not found" }, { status: 404 });
       newRequest.requestReceiver = driverId;
-      driver.incomingRequests.push(newRequest._id);
-      await Promise.all([driver.save(), newRequest.save()]);
-
+      await newRequest.save();
       return NextResponse.json({ ok: true, requestId: newRequest._id });
     }
 

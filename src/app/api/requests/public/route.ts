@@ -25,13 +25,11 @@ export async function POST(req: NextRequest) {
       finalTime,
     });
 
-    // Fetch the user document
-    const user = await User.findOne({ user: userId });
-
-    // Push the new request ID to outgoingRequests and save
-    user.outgoingRequests.push(newRequest._id);
-    console.log(user.outgoingRequests + "Help")
-    await user.save();
+    // Atomically push the outgoing request id to the user's outgoingRequests
+    const updated = await User.findByIdAndUpdate(userId, { $push: { outgoingRequests: newRequest._id } });
+    if (!updated) {
+      console.warn('Could not find user to attach outgoing request', userId);
+    }
 
     return NextResponse.json({ ok: true, requestId: newRequest._id });
   } catch (err: any) {
