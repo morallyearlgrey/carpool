@@ -2,29 +2,28 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     email: {type: String, required: true},
-    password: { type: String, required: true }, // Added missing password
+    password: { type: String, required: true },
     firstName: {type: String, required: true},
     lastName: {type: String, required: true},
 
     vehicleInfo: {
         seatsAvailable: {type: Number},
-    make: {type: String},
+        make: {type: String},
         model: {type: String},
         year: {type: String},
-
     },
 
     currentRide: { type: mongoose.Schema.Types.ObjectId, ref: "Ride" },
     rides: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ride" }],
     schedule: { type: mongoose.Schema.Types.ObjectId, ref: "Schedule" },
 
-    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
-
+    incomingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
+    outgoingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Request" }],
     age: {type: Number},
     gender: {type: String},
 
 }, {
-    timestamps: true // This automatically manages createdAt and updatedAt
+    timestamps: true
 });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
