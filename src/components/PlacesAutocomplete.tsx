@@ -16,7 +16,9 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const win: any = window as any;
+    const win = window as typeof window & {
+      google?: typeof google;
+    };
 
     // If the Places library is already present, we're done.
     if (win.google && win.google.maps && win.google.maps.places) {
