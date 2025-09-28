@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import RecommendedRides from '@/components/RecommendedRides';
+import MyRides from '@/components/MyRides';
+import MyRequests from '@/components/MyRequests';
 import { Navbar } from '@/components/navbar';
 
 // Dynamically import MapComponent so it only renders on the client
@@ -73,47 +74,8 @@ const DashboardPage = () => {
     setIsRequestOpen(true);
   };
 
-  // Handle deleting a request
-  const handleRequestDelete = async (id: string | null) => {
-    if (!id) return alert("No ride selected to cancel");
-    if (!confirm('Are you sure you want to cancel this ride?')) return;
-
-    try {
-      const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete ride');
-
-      setRequestResults(null);
-      if (currentRideId === id) setCurrentRideId(null);
-
-      setIsRequestOpen(false);
-      setSearchLoading(false);
-      setRideMode('request');
-    } catch (err) {
-      console.error('Failed to delete request', id, err);
-      alert('Failed to cancel ride. Please try again.');
-    }
-  };
-
-  // Handle deleting an offer
-  const handleOfferDelete = async (id: string | null) => {
-    if (!id) return alert("No offer selected to cancel");
-    if (!confirm('Are you sure you want to cancel this offer?')) return;
-
-    try {
-      const res = await fetch(`/api/offers/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete offer');
-
-      // Clear frontend state if needed
-      if (currentRideId === id) setCurrentRideId(null);
-
-      setIsRequestOpen(false);
-      setSearchLoading(false);
-      setRideMode('request'); // default back to request
-    } catch (err) {
-      console.error('Failed to delete offer', id, err);
-      alert('Failed to cancel offer. Please try again.');
-    }
-  };
+  // NOTE: request cancellation UI was moved into the My Requests -> Outgoing tab.
+  // Deletion is handled from that component so users manage outgoing requests in one place.
 
   // Handle submitting a ride request
   const handleRequestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -170,14 +132,16 @@ const DashboardPage = () => {
         rideId = publicData.requestId;
         setRequestResults([]);
       }
-
+      alert("Your ride request has been submitted successfully!");
       setCurrentRideId(rideId);
+
     } catch (err) {
       console.error(err);
       alert('Error sending request. Please try again.');
     } finally {
       setSearchLoading(false);
     }
+    setIsRequestOpen(false)
   };
 
   // Handle submitting a ride offer
@@ -216,6 +180,8 @@ const DashboardPage = () => {
     } finally {
       setSearchLoading(false);
     }
+    alert("Your offer has been successfully posted!")
+    setIsRequestOpen(false)
   };
 
 
@@ -266,12 +232,7 @@ const DashboardPage = () => {
               {/* X Close Button */}
               <button
                 onClick={() => {
-                  if (currentRideId) {
-                    if (rideMode === 'request') handleRequestDelete(currentRideId);
-                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
-                  } else {
-                    setIsRequestOpen(false);
-                  }
+                  setIsRequestOpen(false)
                 }}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >

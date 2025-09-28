@@ -158,7 +158,7 @@ export default function ManualSchedulePage(){
 									<label className="block text-sm">Final Address</label>
 									<PlacesAutocomplete
 											onAddressSelect={({ description }) => {
-													updateSlot(i, { beginAddress: description });
+												updateSlot(i, { finalAddress: description });
 											}}
 											placeholder="e.g. 456 Third Dr, City"
 									/>
