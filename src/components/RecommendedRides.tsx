@@ -9,6 +9,7 @@ export default function RecommendedRides({ currentUserId, request, mode = 'rides
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUserId || !request) return;
@@ -18,9 +19,21 @@ export default function RecommendedRides({ currentUserId, request, mode = 'rides
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ userId: currentUserId, ...request, mode }),
     })
-      .then(r => r.json())
-      .then(data => setCandidates(data.candidates || []))
-      .catch(console.error)
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok) {
+          // show message from API if available (uiMessage preferred for end-user text)
+          setMessage(data?.uiMessage || data?.error || 'Failed to fetch recommendations');
+          setCandidates([]);
+          return;
+        }
+        setMessage(null);
+        setCandidates(data?.candidates || []);
+      })
+      .catch((e) => {
+        console.error(e);
+        setMessage('Failed to fetch recommendations');
+      })
       .finally(() => setLoading(false));
   }, [currentUserId, request, mode]);
 
@@ -57,6 +70,7 @@ export default function RecommendedRides({ currentUserId, request, mode = 'rides
   };
 
   if (loading) return <div className="p-4">Searching for recommended rides...</div>;
+  if (message) return <div className="p-4 text-gray-600">{message}</div>;
   if (!candidates.length) return <div className="p-4 text-gray-600">No suggested rides available.</div>;
 
   return (
