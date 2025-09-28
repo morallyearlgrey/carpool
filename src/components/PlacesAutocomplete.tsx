@@ -141,51 +141,6 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
   );
 };
 
-const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = 'Enter an address' }) => {
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const win: any = window as any;
-
-    if (win.google && win.google.maps && win.google.maps.places) {
-      setLoaded(true);
-      return;
-    }
-
-    // If a script tag already exists, wait for it
-    const existing = Array.from(document.getElementsByTagName('script')).find((s) => s.src && s.src.includes('maps.googleapis.com')) as HTMLScriptElement | undefined;
-    if (existing) {
-      const onLoad = () => setLoaded(true);
-      const onError = () => setError('Failed to load Google Maps API');
-      existing.addEventListener('load', onLoad);
-      existing.addEventListener('error', onError);
-      return () => {
-        existing.removeEventListener('load', onLoad);
-        existing.removeEventListener('error', onError);
-      };
-    }
-
-    // Otherwise, inject the script ourselves
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-    if (!key) {
-      setError('Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
-      return;
-    }
-    const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-    s.async = true;
-    s.defer = true;
-    s.onload = () => setLoaded(true);
-    s.onerror = () => setError('Failed to load Google Maps API');
-    document.head.appendChild(s);
-  }, []);
-
-  if (error) return <div className="text-sm text-red-500">{error}</div>;
-  if (!loaded) return <div className="text-sm text-gray-500">Loading Places API...</div>;
-
-  return <PlacesAutocompleteInner onAddressSelect={onAddressSelect} placeholder={placeholder} />;
-};
 
 export default PlacesAutocomplete;
