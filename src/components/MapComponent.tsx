@@ -7,7 +7,7 @@ interface MapComponentProps {
   onRouteSelected?: (route: {
     start: { latLng: google.maps.LatLng; address: string };
     end: { latLng: google.maps.LatLng; address: string };
-  }) => void;
+  }, durationSeconds?: number) => void;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
@@ -20,23 +20,10 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
   const [startAddress, setStartAddress] = useState('');
   const [endAddress, setEndAddress] = useState('');
 
-  // If the Google Maps script is already present (e.g. loaded by another component),
-  // initialize the map on mount. This helps with client-side route transitions.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const win: any = window as any;
-    if (win.google && win.google.maps && win.google.maps.places) {
-      // Defer slightly to ensure DOM refs are ready
-      setTimeout(() => {
-        try { initMap(); } catch (e) { /* ignore init errors */ }
-      }, 0);
-    }
-  }, []);
-
   // Helper: Reverse geocode LatLng → address
   const geocodeLatLng = (latLng: google.maps.LatLng, callback: (address: string) => void) => {
     if (!geocoderRef.current) return;
-    geocoderRef.current.geocode({ location: latLng }, (results) => {
+    geocoderRef.current.geocode({ location: latLng }, (results: google.maps.GeocoderResult[] | null) => {
       callback(results && results[0]?.formatted_address ? results[0].formatted_address : '');
     });
   };
@@ -149,7 +136,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
     googleMap.addListener('click', (e: google.maps.MapMouseEvent) => {
       if (!e.latLng) return;
       if (markersRef.current.length >= 2) {
-        markersRef.current.forEach((m) => m.setMap(null));
+        markersRef.current.forEach((m: google.maps.Marker) => m.setMap(null));
         markersRef.current = [];
         directionsRenderer.setDirections({ routes: [] } as unknown as google.maps.DirectionsResult);
         infoBoxRef.current!.innerText = '';
@@ -195,7 +182,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         }
       });
     }
-  }, [onRouteSelected]);
+  }, [onRouteSelected, startAddress, endAddress]);
 
   // If the Google Maps script is already present (e.g. loaded by another component),
   // initialize the map on mount. This helps with client-side route transitions.
@@ -222,14 +209,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
           className="inputs flex-1"
           placeholder="Enter start location"
           value={startAddress}
-          onChange={(e) => setStartAddress(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartAddress(e.target.value)}
         />
         <input
           id="end-input"
           className="inputs flex-1"
           placeholder="Enter end location"
           value={endAddress}
-          onChange={(e) => setEndAddress(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndAddress(e.target.value)}
         />
       </div>
 

@@ -1,16 +1,8 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
+import { Request } from "@/types/api";
 
-interface Request {
-  _id: string;
-  requestSender: any;
-  requestReceiver?: any;
-  beginLocation: { lat: number; long: number };
-  finalLocation: { lat: number; long: number };
-  date: Date;
-  startTime: string;
-  finalTime: string;
-}
+type TabType = "incoming" | "outgoing" | "public";
 
 export default function MyRequests({ currentUserId }: { currentUserId: string }) {
   const [tab, setTab] = useState<"incoming" | "outgoing" | "public">("incoming");
@@ -24,7 +16,7 @@ export default function MyRequests({ currentUserId }: { currentUserId: string })
           {["incoming", "outgoing", "public"].map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t as any)}
+              onClick={() => setTab(t as TabType)}
               className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                 tab === t
                   ? "bg-[#6c62fe] text-white shadow-md transform scale-105"
@@ -48,7 +40,7 @@ export default function MyRequests({ currentUserId }: { currentUserId: string })
 }
 
 interface RequestsListProps {
-  type: "incoming" | "outgoing" | "public";
+  type: TabType;
   userId: string;
 }
 
@@ -95,7 +87,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
 
     try {
       let url = `/api/requests/${r._id}/respond`;
-      let body: any = { action };
+      let body: { action: string; userId?: string; driverId?: string } | null = { action };
       let method = "POST";
 
       // For public requests, we need to pass the driverId when accepting
@@ -136,10 +128,10 @@ function RequestsList({ type, userId }: RequestsListProps) {
           >
             <div className="font-semibold text-lg">
               {type === "incoming"
-                ? r.requestSender?.firstName || "Rider"
+                ? (typeof r.requestSender === 'object' && r.requestSender?.firstName) || "Rider"
                 : type === "outgoing"
-                ? `To: ${r.requestReceiver?.firstName || "Driver"}`
-                : r.requestSender?.firstName || "Rider"}
+                ? `To: ${(typeof r.requestReceiver === 'object' && r.requestReceiver?.firstName) || "Driver"}`
+                : (typeof r.requestSender === 'object' && r.requestSender?.firstName) || "Rider"}
             </div>
 
             <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
