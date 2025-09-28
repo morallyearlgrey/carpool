@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongooseConnect from '@/lib/mongoose';
-import User from '@/lib/models/user';
 import Ride from '@/lib/models/ride';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest) {
     try {
         await mongooseConnect();
         const { searchParams } = new URL(req.url);

@@ -14,48 +14,42 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
-  const infoBoxRef = useRef<HTMLDivElement | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
   const [startAddress, setStartAddress] = useState('');
   const [endAddress, setEndAddress] = useState('');
 
-  // If the Google Maps script is already present (e.g. loaded by another component),
-  // initialize the map on mount. This helps with client-side route transitions.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const win: any = window as any;
-    if (win.google && win.google.maps && win.google.maps.places) {
-      // Defer slightly to ensure DOM refs are ready
-      setTimeout(() => {
-        try { initMap(); } catch (e) { /* ignore init errors */ }
-      }, 0);
-    }
-  }, []);
-
   // Helper: Reverse geocode LatLng → address
-  const geocodeLatLng = (latLng: google.maps.LatLng, callback: (address: string) => void) => {
+  const geocodeLatLng = useCallback((latLng: google.maps.LatLng, callback: (address: string) => void) => {
     if (!geocoderRef.current) return;
     geocoderRef.current.geocode({ location: latLng }, (results) => {
       callback(results && results[0]?.formatted_address ? results[0].formatted_address : '');
     });
-  };
+  }, []);
 
-  const initMap = useCallback(() => {
-    // avoid double-init
-    if (directionsRendererRef.current) return;
-    if (!mapRef.current) return;
+  // Helper: Clear all markers from the map
+  const clearMarkers = useCallback(() => {
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+  }, []);
 
-    const googleMap = new google.maps.Map(mapRef.current, {
-      center: { lat: 28.6024, lng: -81.3109 },
-      zoom: 12,
+  // Helper: Add a marker to the map
+  const addMarker = useCallback((position: google.maps.LatLng, title: string, color = 'red') => {
+    if (!directionsRendererRef.current?.getMap()) return null;
+
+    const marker = new google.maps.Marker({
+      position,
+      map: directionsRendererRef.current.getMap(),
+      title,
+      icon: {
+        url: `https://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
+        scaledSize: new google.maps.Size(32, 32),
+      },
     });
 
-    const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-    directionsRenderer.setMap(googleMap);
-    directionsRendererRef.current = directionsRenderer;
-
-    geocoderRef.current = new google.maps.Geocoder();
+    markersRef.current.push(marker);
+    return marker;
+  }, []);
 
     // Info box for drive time & distance
     const infoBox = document.createElement('div');
@@ -112,131 +106,116 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
                   });
                 });
               });
-            }
-          }
+            });
+          });
+        } else {
+          console.error('Directions request failed:', status);
         }
-      );
-    };
-
-    const addMarker = (position: google.maps.LatLng, label: 'Start' | 'End') => {
-      const marker = new google.maps.Marker({
-        position,
-        map: googleMap,
-        label,
-        title: label,
-        draggable: true,
-      });
-
-      marker.addListener('dragend', () => {
-        if (markersRef.current.length === 2) {
-          drawRoute(markersRef.current[0].getPosition()!, markersRef.current[1].getPosition()!);
-        }
-      });
-
-      markersRef.current.push(marker);
-
-      if (markersRef.current.length === 2) {
-        drawRoute(markersRef.current[0].getPosition()!, markersRef.current[1].getPosition()!);
-      } else {
-        geocodeLatLng(marker.getPosition()!, (addr) => {
-          if (label === 'Start') setStartAddress(addr);
-          else setEndAddress(addr);
-        });
       }
-    };
+    );
+  }, [geocodeLatLng, onRouteSelected]);
 
-    // Map click: add markers or reset
-    googleMap.addListener('click', (e: google.maps.MapMouseEvent) => {
-      if (!e.latLng) return;
-      if (markersRef.current.length >= 2) {
-        markersRef.current.forEach((m) => m.setMap(null));
-        markersRef.current = [];
-        directionsRenderer.setDirections({ routes: [] } as unknown as google.maps.DirectionsResult);
-        infoBoxRef.current!.innerText = '';
-        setStartAddress('');
-        setEndAddress('');
-        return;
+  // Handle map clicks
+  const handleMapClick = useCallback((clickPosition: google.maps.LatLng) => {
+    const markerCount = markersRef.current.length;
+    
+    if (markerCount === 0) {
+      // First click: add start marker
+      addMarker(clickPosition, 'Start', 'green');
+      geocodeLatLng(clickPosition, (address) => {
+        setStartAddress(address);
+      });
+    } else if (markerCount === 1) {
+      // Second click: add end marker and calculate route
+      addMarker(clickPosition, 'End', 'red');
+      geocodeLatLng(clickPosition, (address) => {
+        setEndAddress(address);
+      });
+      
+      const startMarker = markersRef.current[0];
+      if (startMarker) {
+        calculateAndDisplayRoute(startMarker.getPosition()!, clickPosition);
       }
-      addMarker(e.latLng, markersRef.current.length === 0 ? 'Start' : 'End');
+    } else {
+      // Third+ click: reset and start over
+      clearMarkers();
+      if (directionsRendererRef.current) {
+        // Clear directions by setting an empty result
+        directionsRendererRef.current.set('directions', null);
+      }
+      setStartAddress('');
+      setEndAddress('');
+      
+      // Add new start marker
+      addMarker(clickPosition, 'Start', 'green');
+      geocodeLatLng(clickPosition, (address) => {
+        setStartAddress(address);
+      });
+    }
+  }, [addMarker, calculateAndDisplayRoute, clearMarkers, geocodeLatLng]);
+
+  const initMap = useCallback(() => {
+    // avoid double-init
+    if (directionsRendererRef.current) return;
+    if (!mapRef.current) return;
+
+    const googleMap = new google.maps.Map(mapRef.current, {
+      center: { lat: 28.6024, lng: -81.3109 },
+      zoom: 12,
     });
 
-    // Setup Places Autocomplete
-    const startInputEl = document.getElementById('start-input') as HTMLInputElement;
-    const endInputEl = document.getElementById('end-input') as HTMLInputElement;
+    directionsRendererRef.current = new google.maps.DirectionsRenderer();
+    directionsRendererRef.current.setMap(googleMap);
+    geocoderRef.current = new google.maps.Geocoder();
 
-    if (startInputEl) {
-      const autocompleteStart = new google.maps.places.Autocomplete(startInputEl);
-      autocompleteStart.addListener('place_changed', () => {
-        const place = autocompleteStart.getPlace();
-        if (!place.geometry) return;
-
-        if (markersRef.current[0]) {
-          markersRef.current[0].setMap(null);
-          markersRef.current.shift();
-        }
-        if (place.geometry?.location) {
-          addMarker(place.geometry.location, 'Start');
-        }
-      });
-    }
-
-    if (endInputEl) {
-      const autocompleteEnd = new google.maps.places.Autocomplete(endInputEl);
-      autocompleteEnd.addListener('place_changed', () => {
-        const place = autocompleteEnd.getPlace();
-        if (!place.geometry) return;
-
-        if (markersRef.current[1]) {
-          markersRef.current[1].setMap(null);
-          markersRef.current.pop();
-        }
-        if (place.geometry?.location) {
-          addMarker(place.geometry.location, 'End');
-        }
-      });
-    }
-  }, [onRouteSelected]);
+    // Attach click listener
+    googleMap.addListener('click', (event: google.maps.MapMouseEvent) => {
+      if (event.latLng) {
+        handleMapClick(event.latLng);
+      }
+    });
+  }, [handleMapClick]);
 
   // If the Google Maps script is already present (e.g. loaded by another component),
   // initialize the map on mount. This helps with client-side route transitions.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const win = window as typeof window & {
-      google?: typeof google;
-    };
+    const win = window as typeof window & { google?: typeof google };
     if (win.google && win.google.maps && win.google.maps.places) {
       // Defer slightly to ensure DOM refs are ready
       setTimeout(() => {
-        try { initMap(); } catch {
-          /* ignore init errors */
-        }
+        try { initMap(); } catch { /* ignore init errors */ }
       }, 0);
     }
   }, [initMap]);
 
+  const handleScriptLoad = () => {
+    initMap();
+  };
+
   return (
-    <>
-      <div className="flex gap-2 mb-2">
-        <input
-          id="start-input"
-          className="inputs flex-1"
-          placeholder="Enter start location"
-          value={startAddress}
-          onChange={(e) => setStartAddress(e.target.value)}
-        />
-        <input
-          id="end-input"
-          className="inputs flex-1"
-          placeholder="Enter end location"
-          value={endAddress}
-          onChange={(e) => setEndAddress(e.target.value)}
-        />
+    <div className="w-full h-full">
+      {/* Info Box */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm">
+        <p className="font-semibold text-blue-800">How to use:</p>
+        <p className="text-blue-700">Click once to set start, click again to set destination. Click a third time to reset.</p>
+        {startAddress && (
+          <p className="mt-1 text-green-700">
+            <strong>Start:</strong> {startAddress}
+          </p>
+        )}
+        {endAddress && (
+          <p className="text-red-700">
+            <strong>End:</strong> {endAddress}
+          </p>
+        )}
       </div>
 
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-        strategy="afterInteractive"
-        onLoad={initMap}
+      {/* Map Container */}
+      <div 
+        ref={mapRef} 
+        className="w-full h-96 border border-gray-300 rounded-md"
+        style={{ minHeight: '400px' }}
       />
       <div ref={mapRef} className="w-full h-full rounded-md" />
     </>

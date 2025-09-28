@@ -4,21 +4,34 @@ import mongooseConnect from '@/lib/mongoose';
 import RequestModel from '@/lib/models/request';
 import User from '@/lib/models/user';
 import Ride from '@/lib/models/ride';
+import { Types } from 'mongoose';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+interface RequestDoc {
+  _id: Types.ObjectId;
+  requestSender?: Types.ObjectId;
+  requestReceiver?: Types.ObjectId;
+  beginLocation?: { lat: number; long: number };
+  finalLocation?: { lat: number; long: number };
+  date?: Date;
+  startTime?: string;
+  finalTime?: string;
+  status?: string;
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await mongooseConnect();
 
     const actionBody = await req.json();
     const action = actionBody.action as 'accept' | 'reject';
     const driverFromBody = actionBody.driverId?.toString(); // for public claim
-    const { id: requestId } = params;
+    const { id: requestId } = await params;
 
     if (!action || !['accept', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'invalid action' }, { status: 400 });
     }
 
-    const request: any = await RequestModel.findById(requestId).lean();
+    const request = await RequestModel.findById(requestId).lean() as RequestDoc | null;
     if (!request) return NextResponse.json({ error: 'request not found' }, { status: 404 });
 
     const riderId = request.requestSender?.toString();

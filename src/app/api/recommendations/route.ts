@@ -2,6 +2,73 @@ import { NextRequest, NextResponse } from 'next/server';
 import User from '@/lib/models/user';
 import Schedule from '@/lib/models/schedule';
 import Ride from '@/lib/models/ride';
+import { Types } from 'mongoose';
+
+interface UserDoc {
+  _id: Types.ObjectId;
+  schedule?: Types.ObjectId;
+  vehicleInfo?: {
+    seatsAvailable?: number;
+    make?: string;
+    model?: string;
+    year?: string;
+  };
+}
+
+interface ScheduleDoc {
+  _id: Types.ObjectId;
+  user: Types.ObjectId;
+  availableTimes: AvailableTime[];
+}
+
+interface AvailableTime {
+  day: string;
+  startTime: string;
+  endTime: string;
+  beginLocation?: { lat: number; long: number };
+  finalLocation?: { lat: number; long: number };
+}
+
+interface RideDoc {
+  _id: Types.ObjectId;
+  driver: UserDoc;
+  riders: Array<{ user: Types.ObjectId; request: Types.ObjectId; orderPickUp?: number }>;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  beginLocation?: { lat: number; long: number };
+  finalLocation?: { lat: number; long: number };
+  maxRiders: number;
+}
+
+interface DiagnosticEntry {
+  reason?: string;
+  day?: string;
+  slot?: AvailableTime;
+  rideId?: Types.ObjectId;
+  timeDelta?: number;
+  startDist?: number;
+  endDist?: number;
+  seatsLeft?: number;
+  score?: number;
+}
+
+interface Candidate {
+  id: string;
+  type: string;
+  ride: RideDoc;
+  score: number;
+  timeDelta: number;
+  startDist: number;
+  endDist: number;
+  seatsLeft: number;
+}
+
+interface RecommendationResponse {
+  candidates: Candidate[];
+  diagnostics?: DiagnosticEntry[];
+  uiMessage?: string;
+}
 
 function toMinutes(t?: string) {
   if (!t) return 0;
@@ -28,19 +95,19 @@ export async function POST(req: NextRequest) {
     if (isNaN(parsed.getTime())) return NextResponse.json({ error: 'invalid date' }, { status: 400 });
 
     // load requester and their schedule
-    const requester = await User.findById(userId).lean() as any;
+    const requester = await User.findById(userId).lean() as unknown as UserDoc;
     if (!requester) return NextResponse.json({ error: 'requesting user not found' }, { status: 404 });
 
-    let requesterSchedule = null as any;
-    if (requester.schedule) requesterSchedule = await Schedule.findById(requester.schedule).lean() as any;
-    if (!requesterSchedule) requesterSchedule = await Schedule.findOne({ user: requester._id }).lean() as any;
+    let requesterSchedule: ScheduleDoc | null = null;
+    if (requester.schedule) requesterSchedule = await Schedule.findById(requester.schedule).lean() as unknown as ScheduleDoc;
+    if (!requesterSchedule) requesterSchedule = await Schedule.findOne({ user: requester._id }).lean() as unknown as ScheduleDoc;
     if (!requesterSchedule) return NextResponse.json({ error: 'requesting user has no schedule; upload one to use recommendations', uiMessage: 'Please submit a schedule to enable this feature.' }, { status: 400 });
 
     const day = parsed.toLocaleDateString('en-US', { weekday: 'long' });
     const dayFull = (day || '').toLowerCase();
     const dayKey = dayFull.slice(0, 3);
 
-    const slots = (requesterSchedule.availableTimes || []).filter((s: any) => {
+    const slots = (requesterSchedule.availableTimes || []).filter((s: AvailableTime) => {
       const sd = ((s.day || '') + '').toString().toLowerCase().trim();
       return sd.slice(0,3) === dayKey || sd === dayFull || sd.includes(dayFull) || sd.includes('weekday');
     });
@@ -48,13 +115,13 @@ export async function POST(req: NextRequest) {
 
     // find rides scheduled for that date (ride.date is a Date in the model)
     const dateString = parsed.toISOString().slice(0,10);
-    const rides = await Ride.find({ date: { $gte: new Date(dateString + 'T00:00:00Z'), $lt: new Date(dateString + 'T23:59:59Z') } }).populate('driver').lean() as any[];
+    const rides = await Ride.find({ date: { $gte: new Date(dateString + 'T00:00:00Z'), $lt: new Date(dateString + 'T23:59:59Z') } }).populate('driver').lean() as unknown as RideDoc[];
 
     const MAX_DIST_KM = Number(process.env.NEXT_PUBLIC_RECOMMENDATION_MAX_DIST_KM ?? '25');
     const TIME_SLACK = Number(process.env.NEXT_PUBLIC_RECOMMENDATION_TIME_SLACK_MINUTES ?? '90');
 
-    const diagnostics: any[] = [];
-    const candidatesMap = new Map<string, any>();
+    const diagnostics: DiagnosticEntry[] = [];
+    const candidatesMap = new Map<string, Candidate>();
 
     for (const slot of slots) {
       const slotStart = toMinutes(slot.startTime);
@@ -92,7 +159,7 @@ export async function POST(req: NextRequest) {
 
     const candidates = Array.from(candidatesMap.values()).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
     const maxResults = Number(process.env.NEXT_PUBLIC_RECOMMENDATION_MAX_RESULTS ?? '10');
-    const response: any = { candidates: candidates.slice(0, maxResults) };
+    const response: RecommendationResponse = { candidates: candidates.slice(0, maxResults) };
     if (explain) response.diagnostics = diagnostics;
     if (!response.candidates.length && !explain) response.uiMessage = 'No rides matched your schedule; try widening time or checking your schedule.';
     return NextResponse.json(response);

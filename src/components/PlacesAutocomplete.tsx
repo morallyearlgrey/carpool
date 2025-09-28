@@ -90,7 +90,7 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
     if (externalValue !== undefined && externalValue !== internalValue) {
       setValue(externalValue, false);
     }
-  }, [externalValue, setValue]);
+  }, [externalValue, internalValue, setValue]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
