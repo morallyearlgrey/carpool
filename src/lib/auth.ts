@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import clientPromise from "@/lib/mongodb";
 
+// NextAuth configuration
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -16,7 +17,7 @@ export const authOptions: AuthOptions = {
 
         const client = await clientPromise;
         const db = client.db("carpool");
-        
+
         const user = await db.collection("users").findOne({ email: credentials.email });
         if (!user) return null;
 
@@ -26,38 +27,42 @@ export const authOptions: AuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
-          name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
         };
       },
     }),
   ],
   session: {
-    strategy: "jwt" as const, 
+    strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
   },
-
   callbacks: {
-        async jwt({ token, user }) {
-        if (user) {
-            token.id = user.id;
-        }
-        return token;
-        },
-         async session({ session, token }) {
-            return {
-              ...session,
-              user: {
-                ...session.user,
-                id: token.id as string,
-              }
-            }
-        }
+    // Add user info to JWT
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+      }
+      return token;
+    },
+    // Make JWT data available in session
+    async session({ session, token }) {
+  if (token.id) {
+    session.user = {
+      ...session.user,
+      id: token.id as string,
+      firstName: token.firstName ?? "",
+      lastName: token.lastName ?? "",
+    };
+  }
+  return session;
+},
   },
-
 };
 
 const handler = NextAuth(authOptions);
