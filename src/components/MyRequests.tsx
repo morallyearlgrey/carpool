@@ -91,6 +91,45 @@ function RequestsList({ type, userId }: RequestsListProps) {
     return () => clearInterval(interval);
   }, [load]);
 
+  // --- helper functions to optimistically remove a request ---
+  const handleAccept = async (r: Request) => {
+    if (!confirm('Accept this request and create a ride?')) return;
+    try {
+      const res = await fetch(`/api/requests/${r._id}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept' }),
+      });
+      if (!res.ok) throw new Error('Failed to accept request');
+
+      await fetch(`/api/requests/${r._id}`, { method: 'DELETE' });
+
+      // remove from list immediately
+      setItems(prev => prev?.filter(req => req._id !== r._id) || []);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to accept request.');
+    }
+  };
+
+  const handleReject = async (r: Request) => {
+    if (!confirm('Reject this request?')) return;
+    try {
+      const res = await fetch(`/api/requests/${r._id}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      });
+      if (!res.ok) throw new Error('Failed to reject request');
+
+      // remove from list immediately
+      setItems(prev => prev?.filter(req => req._id !== r._id) || []);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to reject request.');
+    }
+  };
+
   return (
     <div>
       <div className="mb-2 text-sm text-gray-500">Automatically refreshes every 15s</div>
@@ -107,35 +146,72 @@ function RequestsList({ type, userId }: RequestsListProps) {
             >
               <div className="font-semibold text-lg">
                 {type === "incoming"
-                  ? typeof r.user === "object"
-                    ? r.user.firstName
-                    : "Rider"
+
+                  ? r.requestSender?.firstName || "Rider"
                   : type === "outgoing"
-                  ? `To: ${r.driver?.firstName || "Driver"}`
-                  : typeof r.user === "object"
-                  ? r.user.firstName
-                  : "Rider"}
+                  ? `To: ${r.requestReceiver?.firstName || "Driver"}`
+                  : r.requestSender?.firstName || "Rider"}
               </div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
 
-              <div className="mt-3 flex gap-2 flex-wrap">
-                {type === "incoming" && (
-                  <>
-                    <ActionButton color="green" onClick={async () => handleAction(r._id, "accept", load)}>
-                      Accept
-                    </ActionButton>
-                    <ActionButton color="red" onClick={async () => handleAction(r._id, "reject", load)}>
-                      Reject
-                    </ActionButton>
-                  </>
-                )}
-                {type === "outgoing" && (
-                  <ActionButton color="red" onClick={async () => handleAction(r._id, "cancel", load)}>
+              {type === "incoming" && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => handleAccept(r)}
+                    className="px-2 py-1 bg-green-600 text-white rounded text-sm"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleReject(r)}
+                    className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+
+              {type === "outgoing" && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Cancel this outgoing request?")) return;
+                      try {
+                        const res = await fetch(`/api/requests/${r._id}`, { method: "DELETE" });
+                        if (!res.ok) throw new Error("Failed to cancel request");
+                        setItems(prev => prev?.filter(req => req._id !== r._id) || []);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Failed to cancel request.");
+                      }
+                    }}
+                    className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  >
                     Cancel
-                  </ActionButton>
-                )}
-                {type === "public" && (
-                  <ActionButton color="purple" onClick={async () => handleAction(r._id, "claim", load, userId)}>
+                  </button>
+                </div>
+              )}
+
+              {type === "public" && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Claim this public request?")) return;
+                      try {
+                        const res = await fetch(`/api/requests/${r._id}/respond`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: 'accept', driverId: userId }),
+                        });
+                        if (!res.ok) throw new Error("Failed to claim request");
+                        setItems(prev => prev?.filter(req => req._id !== r._id) || []);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Failed to claim request.");
+                      }
+                    }}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
+                  >
                     Claim
                   </ActionButton>
                 )}
