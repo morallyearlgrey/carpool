@@ -28,10 +28,10 @@ export default function MyRides({ currentUserId }:{ currentUserId: string }){
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-purple-800">My Rides</h2>
+        <h2 className="text-xl font-bold text-[#6c62fe]">My Rides</h2>
         <div className="flex gap-2">
-          <button onClick={()=>setTab('recommendations')} className={`px-3 py-1 rounded ${tab==='recommendations'?'bg-purple-600 text-white':''}`}>Recommendations</button>
-          <button onClick={()=>setTab('myrides')} className={`px-3 py-1 rounded ${tab==='myrides'?'bg-purple-600 text-white':''}`}>My Rides</button>
+          <button onClick={()=>setTab('recommendations')} className={`px-3 py-1 rounded ${tab==='recommendations'?'bg-[#6c62fe] text-white':''}`}>Recommendations</button>
+          <button onClick={()=>setTab('myrides')} className={`px-3 py-1 rounded ${tab==='myrides'?'bg-[#6c62fe] text-white':''}`}>My Rides</button>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function MyRides({ currentUserId }:{ currentUserId: string }){
 
     return (
       <div>
-        <button onClick={load} className="px-3 py-1 bg-purple-600 text-white rounded mb-2">Load My Rides</button>
+        <button onClick={load} className="px-3 py-1 bg-[#6c62fe] text-white rounded mb-2">Load My Rides</button>
         {loading && <div>Loading...</div>}
         {rides && rides.length === 0 && <div className="text-sm text-gray-600">No rides found.</div>}
         {rides && rides.length > 0 && (

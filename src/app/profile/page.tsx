@@ -27,7 +27,7 @@ export default function App() {
     // Gender select handler removed as it was unused
 
   return (
-    <div className="min-h-screen font-sans text-[#663399] flex flex-col">
+    <div className="min-h-screen font-sans text-[#6c62fe] flex flex-col">
       <Navbar isLoggedIn={isLoggedIn} />
 
       <main className="flex-grow flex items-center justify-center p-4">
@@ -40,7 +40,7 @@ export default function App() {
             <div className="flex justify-center mt-4 w-full">
               <Button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="px-6 py-2 text-base bg-transparent text-[#663399] font-medium rounded-full border border-[#663399] hover:bg-[#663399]/60 transition-all duration-300 w-full cursor-pointer"
+                className="px-6 py-2 text-base bg-transparent text-[#6c62fe] font-medium rounded-full border border-[#6c62fe] hover:bg-[#663399]/60 transition-all duration-300 w-full cursor-pointer"
               >
                 Log Out
               </Button>

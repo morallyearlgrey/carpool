@@ -51,6 +51,7 @@ const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
   const [currentRideId, setCurrentRideId] = useState<string | null>(null);
+  
 
   const [showComponent, setShowComponent] = useState(false);
 
@@ -62,6 +63,9 @@ const DashboardPage = () => {
 
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
+  const [startTime, setStartTime] = useState('');
+const [endTime, setEndTime] = useState('');
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -198,12 +202,7 @@ const DashboardPage = () => {
               {/* X Close Button */}
               <button
                 onClick={() => {
-                  if (currentRideId) {
-                    if (rideMode === 'request') handleRequestDelete(currentRideId);
-                    else if (rideMode === 'offer') handleOfferDelete(currentRideId);
-                  } else {
-                    setIsRequestOpen(false);
-                  }
+                  setIsRequestOpen(false)
                 }}
                 className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
               >
@@ -240,13 +239,24 @@ const DashboardPage = () => {
                   defaultValue={new Date().toISOString().slice(0, 10)}
                   className="inputs mb-2"
                 />
-                <input name="startTime" placeholder="08:30" className="inputs mb-2" />
-                <input name="finalTime" placeholder="09:00" className="inputs mb-2" />
+                <input
+                  name="startTime"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="inputs mb-2"
+                />
+
+                <input
+                  name="finalTime"
+                  value={endTime}
+                  readOnly
+                  className="inputs mb-2 bg-gray-100 cursor-not-allowed"
+                />
 
                 {/* Submit button */}
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded"
+                  className="px-4 py-2 bg-[#6c62fe] text-white rounded"
                   disabled={searchLoading}
                 >
                   {searchLoading

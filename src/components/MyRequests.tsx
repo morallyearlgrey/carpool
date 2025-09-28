@@ -31,23 +31,23 @@ function MyRequests({ currentUserId }: MyRequestsProps) {
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-purple-800">Requests</h2>
+        <h2 className="text-xl font-bold text-[#6c62fe]">Requests</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setTab("incoming")}
-            className={`px-3 py-1 rounded ${tab === "incoming" ? "bg-purple-600 text-white" : ""}`}
+            className={`px-3 py-1 rounded ${tab === "incoming" ? "bg-[#6c62fe] text-white" : ""}`}
           >
             Incoming
           </button>
           <button
             onClick={() => setTab("outgoing")}
-            className={`px-3 py-1 rounded ${tab === "outgoing" ? "bg-purple-600 text-white" : ""}`}
+            className={`px-3 py-1 rounded ${tab === "outgoing" ? "bg-[#6c62fe] text-white" : ""}`}
           >
             Outgoing
           </button>
           <button
             onClick={() => setTab("public")}
-            className={`px-3 py-1 rounded ${tab === "public" ? "bg-purple-600 text-white" : ""}`}
+            className={`px-3 py-1 rounded ${tab === "public" ? "bg-[#6c62fe] text-white" : ""}`}
           >
             Public
           </button>
@@ -199,7 +199,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
                         alert("Failed to claim request.");
                       }
                     }}
-                    className="px-2 py-1 bg-blue-600 text-white rounded text-sm"
+                    className="px-2 py-1 bg-[#6c62fe] text-white rounded text-sm"
                   >
                     Claim
                   </button>
