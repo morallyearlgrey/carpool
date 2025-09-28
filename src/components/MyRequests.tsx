@@ -71,12 +71,48 @@ function RequestsList({ type, userId }: RequestsListProps) {
       {!loading && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
       {items.length > 0 && (
         <ul className="space-y-2 mt-2">
-          {items.map((r) => (
+          {items.map((r: any) => (
             <li key={r._id} className="p-2 border rounded">
               <div className="font-semibold">
                 {type === "incoming" ? r.requestSender?.firstName || "Rider" : `To: ${r.driver?.firstName || "Driver"}`}
               </div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
+              {type === "incoming" && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Accept this request and create a ride?')) return;
+                      try {
+                        const res = await fetch(`/api/requests/${r._id}/respond`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'accept' }) });
+                        if (!res.ok) throw new Error('Failed to accept');
+                        await load();
+                      } catch (err) {
+                        console.error(err);
+                        alert('Failed to accept request.');
+                      }
+                    }}
+                    className="px-2 py-1 bg-green-600 text-white rounded text-sm"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Reject this request?')) return;
+                      try {
+                        const res = await fetch(`/api/requests/${r._id}/respond`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reject' }) });
+                        if (!res.ok) throw new Error('Failed to reject');
+                        await load();
+                      } catch (err) {
+                        console.error(err);
+                        alert('Failed to reject request.');
+                      }
+                    }}
+                    className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
               {type === "outgoing" && (
                 <div className="mt-2 flex gap-2">
                   <button
