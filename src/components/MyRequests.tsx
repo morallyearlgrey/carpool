@@ -79,31 +79,34 @@ function RequestsList({ type, userId }: RequestsListProps) {
   }, [load]);
 
   // --- handle request actions ---
-  const handleAction = async (r: Request, action: "accept" | "reject" | "cancel" | "claim") => {
-    if (
-      !confirm(
-        action === "accept"
-          ? "Accept this request and create a ride?"
-          : action === "reject"
-          ? "Reject this request?"
-          : action === "cancel"
-          ? "Cancel this request?"
-          : "Claim this public request?"
-      )
-    ) return;
+  const handleAction = async (r: Request, action: "accept" | "reject" | "cancel") => {
+    let confirmMessage = "";
+    if (action === "accept") {
+      confirmMessage = type === "public" 
+        ? "Accept this public request and create a ride?"
+        : "Accept this request and create a ride?";
+    } else if (action === "reject") {
+      confirmMessage = "Reject this request?";
+    } else if (action === "cancel") {
+      confirmMessage = "Cancel this request?";
+    }
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       let url = `/api/requests/${r._id}/respond`;
       let body: any = { action };
       let method = "POST";
 
+      // For public requests, we need to pass the driverId when accepting
+      if (type === "public" && action === "accept") {
+        body.driverId = userId;
+      }
+
       if (action === "cancel") {
         url = `/api/requests/${r._id}`;
         method = "DELETE";
         body = null;
-      } else if (action === "claim") {
-        url = `/api/requests/${r._id}/claim`;
-        body = { driverId: userId };
       }
 
       const res = await fetch(url, {
@@ -152,7 +155,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
                 <ActionButton color="red" onClick={() => handleAction(r, "cancel")}>Cancel</ActionButton>
               )}
               {type === "public" && (
-                <ActionButton color="purple" onClick={() => handleAction(r, "claim")}>Claim</ActionButton>
+                <ActionButton color="purple" onClick={() => handleAction(r, "accept")}>Accept</ActionButton>
               )}
             </div>
           </li>
