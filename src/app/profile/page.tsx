@@ -1,17 +1,13 @@
 "use client"; // This line tells Next.js to render this component on the client
 
-import React, { useState } from "react";
+import React from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 
 // Main App component
 export default function App() {
-  // State to manage the selected gender ('F', 'M', or null)
-  const [selectedGender, setSelectedGender] = useState(null);
-  const [currentPage, setCurrentPage] = useState("profile");
-
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isLoggedIn = status === "authenticated";
 
   /**
@@ -20,13 +16,7 @@ export default function App() {
    * Otherwise, it sets the new gender as selected.
    * @param {'F' | 'M'} gender - The gender to be selected.
    */
-  const handleGenderSelect = (gender) => {
-    if (selectedGender === gender) {
-      setSelectedGender(null); // Deselect if already selected
-    } else {
-      setSelectedGender(gender); // Select the new gender
-    }
-  };
+    // Gender select handler removed as it was unused
 
   return (
     // Main container with a light purple background

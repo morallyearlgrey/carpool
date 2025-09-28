@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import Script from 'next/script';
 
 interface MapComponentProps {
@@ -122,7 +122,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       if (markersRef.current.length >= 2) {
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
-        directionsRenderer.setDirections({ routes: [] } as google.maps.DirectionsResult);
+        directionsRenderer.setDirections({ routes: [] } as unknown as google.maps.DirectionsResult);
         infoBoxRef.current!.innerText = '';
         setStartAddress('');
         setEndAddress('');
@@ -145,7 +145,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
           markersRef.current[0].setMap(null);
           markersRef.current.shift();
         }
-        addMarker(place.geometry.location, 'Start');
+        if (place.geometry?.location) {
+          addMarker(place.geometry.location, 'Start');
+        }
       });
     }
 
@@ -159,7 +161,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
           markersRef.current[1].setMap(null);
           markersRef.current.pop();
         }
-        addMarker(place.geometry.location, 'End');
+        if (place.geometry?.location) {
+          addMarker(place.geometry.location, 'End');
+        }
       });
     }
   };

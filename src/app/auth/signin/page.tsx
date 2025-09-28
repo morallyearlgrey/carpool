@@ -11,7 +11,7 @@ export default function SignIn() {
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isLoggedIn = status === "authenticated";
 
   const handleSubmit = async (e: React.FormEvent) => {

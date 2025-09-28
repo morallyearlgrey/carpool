@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 type Location = { lat: number; long: number };
 
 export default function RecommendedRides({ currentUserId, request, mode = 'rides' }: { currentUserId: string; request: { date: string; startTime: string; beginLocation: Location; finalLocation: Location }, mode?: 'rides' | 'schedules' }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export default function RecommendedRides({ currentUserId, request, mode = 'rides
       .then(data => setCandidates(data.candidates || []))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [currentUserId, request]);
+  }, [currentUserId, request, mode]);
 
   const sendRequest = async (rideId?: string, driverId?: string) => {
     setSending(rideId || driverId || null);

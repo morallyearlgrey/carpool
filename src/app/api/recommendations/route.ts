@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import User from "@/lib/models/user";
 import Schedule from "@/lib/models/schedule";
 import Ride from "@/lib/models/ride";
-import RequestModel from "@/lib/models/request";
 import mongooseConnect from '@/lib/mongoose';
 
 // Simple Haversine distance in kilometers
@@ -42,6 +40,7 @@ export async function POST(req: NextRequest) {
   // Also consider users with schedules on that day — only if mode === 'schedules'
   const schedules = (mode === 'schedules') ? await Schedule.find({}).populate('user').lean() : [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const candidates: any[] = [];
 
     // Score rides by time proximity and geographic closeness
@@ -50,6 +49,7 @@ export async function POST(req: NextRequest) {
       return hh * 60 + mm;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const ride of rides as any[]) {
       // compute distance from rider beginLocation to ride beginLocation
       if (!ride.beginLocation) continue;
@@ -79,9 +79,11 @@ export async function POST(req: NextRequest) {
 
     // schedule-based candidates: iterate each availableTime for weekday
     const weekday = queryDate.toLocaleDateString('en-US', { weekday: 'long' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const sched of schedules as any[]) {
       if (!sched.availableTimes) continue;
-      for (const slot of sched.availableTimes as any[]) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const slot of sched.availableTimes as any[]) {
         if (slot.day !== weekday) continue;
 
         // compute time overlap and allow 1 hour slack
@@ -91,14 +93,18 @@ export async function POST(req: NextRequest) {
         const slack = 60; // minutes
         if (start < availStart - slack || start > availEnd + slack) continue;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user: any = await User.findById(sched.user).lean();
         if (!user) continue;
 
         // estimate driver's route endpoints: prefer slot's begin/final locations, else fallback to currentRide
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let estBegin: any = slot.beginLocation ?? null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let estEnd: any = slot.finalLocation ?? null;
         let seatsLeft = user?.vehicleInfo?.seatsAvailable ?? null;
         if ((!estBegin || !estEnd) && user.currentRide) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const r: any = await Ride.findById(user.currentRide).lean();
           if (r) {
             if (!estBegin && r.beginLocation) estBegin = r.beginLocation;
@@ -143,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     // return top 10
     return NextResponse.json({ candidates: candidates.slice(0, 10) });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
     return NextResponse.json({ error: 'server error' }, { status: 500 });
   }
