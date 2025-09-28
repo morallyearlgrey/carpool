@@ -91,7 +91,7 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
     if (externalValue !== undefined && externalValue !== internalValue) {
       setValue(externalValue, false);
     }
-  }, [externalValue, internalValue, setValue]);
+  }, [externalValue, setValue]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -101,6 +101,7 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
 
   const handleSelect = ({ description }: { description: string }) => async () => {
     setValue(description, false);
+    onValueChange?.(description);
     clearSuggestions();
 
     try {
