@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 const requestSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  requestSender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // requester
+  requestReceiver: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // who the request is sent to
 
   beginLocation: {
     lat: { type: Number, required: true },
@@ -13,16 +14,16 @@ const requestSchema = new mongoose.Schema({
   },
 
   date: { type: Date, required: true },
-
   startTime: { type: String, required: true }, // e.g., "08:30"
   finalTime: { type: String, required: true }, // e.g., "09:15"
 
-//   // Optional preferences for matching
-//   preferences: {
-//     age: Number,
-//     gender: { type: String, enum: ["male", "female", "other"] },
-//     schoolwork: { type: String, enum: ["student", "employee", "both"] }
-//   },
+  // // Status tracking
+  // status: { 
+  //   type: String, 
+  //   enum: ["pending", "accepted", "rejected", "cancelled"], 
+  //   default: "pending" 
+  // },
+
 
 }, { timestamps: true });
 
