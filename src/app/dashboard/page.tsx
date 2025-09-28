@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import MyRides from '@/components/MyRides';
-import MyRequests from '@/components/MyRequests';
+import RecommendedRides from '@/components/RecommendedRides';
 import { Navbar } from '@/components/navbar';
 
 // Dynamically import MapComponent so it only renders on the client
@@ -48,7 +47,6 @@ const CarIcon = ({ className }: { className?: string }) => (
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
-  const [currentRideId, setCurrentRideId] = useState<string | null>(null);
 
   const [showComponent, setShowComponent] = useState(false);
 
@@ -107,11 +105,9 @@ const DashboardPage = () => {
 
       const data = await res.json();
       const candidates = data.candidates || [];
-      let rideId: string | null = null;
 
       if (candidates.length > 0) {
         setRequestResults(candidates);
-        rideId = candidates[0]?._id || null;
       } else {
         // No matches → post publicly
         const publicRes = await fetch('/api/requests/public', {
@@ -128,12 +124,10 @@ const DashboardPage = () => {
           }),
         });
 
-        const publicData = await publicRes.json();
-        rideId = publicData.requestId;
+        await publicRes.json();
         setRequestResults([]);
       }
       alert("Your ride request has been submitted successfully!");
-      setCurrentRideId(rideId);
 
     } catch (err) {
       console.error(err);
@@ -171,8 +165,7 @@ const DashboardPage = () => {
         }),
       });
 
-      const data = await res.json();
-      setCurrentRideId(data.offer?._id || null);
+      await res.json();
       setRequestResults([]);
     } catch (err) {
       console.error(err);

@@ -2,7 +2,27 @@
 
 import React, { useState } from 'react';
 
-export default function MyRequests(){
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface Request {
+  _id: string;
+  user: User | string;
+  driver?: User;
+  beginLocation: { lat: number; long: number };
+  finalLocation: { lat: number; long: number };
+  date: Date;
+  startTime: string;
+  finalTime: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+function MyRequests() {
   const [tab, setTab] = useState<'incoming'|'outgoing'>('incoming');
 
   return (
@@ -23,7 +43,7 @@ export default function MyRequests(){
 
 function IncomingRequests(){
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<any[] | null>(null);
+  const [items, setItems] = useState<Request[] | null>(null);
 
   async function load(){
     setLoading(true);
@@ -54,7 +74,7 @@ function IncomingRequests(){
         <ul className="space-y-2 mt-2">
           {items.map(r => (
             <li key={r._id} className="p-2 border rounded">
-              <div className="font-semibold">{r.user?.firstName || 'Rider'}</div>
+              <div className="font-semibold">{typeof r.user === 'object' ? r.user.firstName : 'Rider'}</div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
             </li>
           ))}
@@ -66,7 +86,7 @@ function IncomingRequests(){
 
 function OutgoingRequests(){
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<any[] | null>(null);
+  const [items, setItems] = useState<Request[] | null>(null);
   async function load(){
     setLoading(true);
     try{
@@ -124,3 +144,5 @@ function OutgoingRequests(){
     </div>
   )
 }
+
+export default MyRequests;
