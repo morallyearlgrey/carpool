@@ -1,17 +1,10 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
 
-interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
 interface Request {
   _id: string;
-  user: User;
-  driver?: User;
+  user: any;
+  driver?: any;
   beginLocation: { lat: number; long: number };
   finalLocation: { lat: number; long: number };
   date: Date;
@@ -31,7 +24,7 @@ export default function MyRequests({ currentUserId }: { currentUserId: string })
           {["incoming", "outgoing", "public"].map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t as "incoming" | "outgoing" | "public")}
+              onClick={() => setTab(t as any)}
               className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                 tab === t
                   ? "bg-[#6c62fe] text-white shadow-md transform scale-105"
@@ -101,7 +94,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
 
     try {
       let url = `/api/requests/${r._id}/respond`;
-      let body: { action: string; userId?: string; driverId?: string } | null = { action };
+      let body: any = { action };
       let method = "POST";
 
       if (action === "cancel") {
@@ -110,7 +103,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
         body = null;
       } else if (action === "claim") {
         url = `/api/requests/${r._id}/claim`;
-        body = { action, driverId: userId };
+        body = { driverId: userId };
       }
 
       const res = await fetch(url, {
