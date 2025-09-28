@@ -205,6 +205,8 @@ export default function ManualSchedulePage(){
 		setFinalAddressValue('');
 		setLocalBegin(null);
 		setLocalFinal(null);
+		setLocalStart('17:00');
+		setLocalDuration(30);
 		setMessage(`Saved ${day} slot`);
 	}
 
@@ -306,7 +308,14 @@ export default function ManualSchedulePage(){
 
 					{selectedDayIndex !== null && (
 						<div>
-							<h3 className="font-semibold mb-2">{weekdays[selectedDayIndex]}</h3>
+							<h3 className="font-semibold mb-2">
+								{weekdays[selectedDayIndex]}
+								{editingSlotIndex !== null && (
+									<span className="ml-2 text-sm text-orange-600 bg-orange-100 px-2 py-1 rounded">
+										Editing slot {editingSlotIndex + 1}
+									</span>
+								)}
+							</h3>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 								<div>
@@ -352,7 +361,9 @@ export default function ManualSchedulePage(){
 								</div>
 
 								<div className="ml-auto">
-									<button onClick={applyLocalToSelectedDay} className="px-3 py-2 bg-purple-600 text-white rounded">Save Day</button>
+									<button onClick={applyLocalToSelectedDay} className="px-3 py-2 bg-purple-600 text-white rounded">
+										{editingSlotIndex !== null ? 'Update Slot' : 'Save Day'}
+									</button>
 								</div>
 							</div>
 
@@ -367,6 +378,7 @@ export default function ManualSchedulePage(){
 											<div className="text-sm">{ss.startTime} — {ss.endTime} <span className="text-xs text-gray-500">{ss.beginAddress || ''} → {ss.finalAddress || ''}</span></div>
 											<div className="flex gap-2">
 												<button onClick={() => {
+													console.log('Edit clicked for slot:', ss);
 													// load into editor for quick edit
 													setEditingSlotIndex(si);
 													setLocalStart(ss.startTime);
@@ -376,6 +388,7 @@ export default function ManualSchedulePage(){
 													// Populate address input values for editing
 													setBeginAddressValue(ss.beginAddress || '');
 													setFinalAddressValue(ss.finalAddress || '');
+													console.log('Address values set:', { begin: ss.beginAddress, final: ss.finalAddress });
 												}} className="text-xs text-blue-600 cursor-pointer">Edit</button>
 												<button onClick={() => removeSlotForDay(selectedDayIndex, si)} className="text-xs text-red-600 cursor-pointer">Remove</button>
 											</div>
