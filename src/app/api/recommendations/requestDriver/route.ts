@@ -44,13 +44,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, requestId: newRequest._id });
     }
 
-    // If neither rideId nor driverId provided
-    return NextResponse.json({
-      ok: true,
-      requestId: newRequest._id,
-      warning: "no rideId or driverId attached; request stored standalone",
-    });
-  } catch (err: any) {
+
+    // If neither rideId nor driverId provided, return success but warn
+    return NextResponse.json({ ok: true, requestId: newRequest._id, warning: 'no rideId or driverId attached; request stored standalone' });
+  } catch (err: unknown) {
     console.error(err);
     return NextResponse.json({ error: "server error" }, { status: 500 });
   }

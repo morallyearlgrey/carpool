@@ -5,8 +5,28 @@ interface MyRequestsProps {
   currentUserId: string; // use string, not ObjectId
 }
 
-export default function MyRequests({ currentUserId }: MyRequestsProps) {
-  const [tab, setTab] = useState<"incoming" | "outgoing">("incoming");
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface Request {
+  _id: string;
+  user: User | string;
+  driver?: User;
+  beginLocation: { lat: number; long: number };
+  finalLocation: { lat: number; long: number };
+  date: Date;
+  startTime: string;
+  finalTime: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+function MyRequests({ currentUserId }: MyRequestsProps) {
+  const [tab, setTab] = useState<'incoming'|'outgoing'>('incoming');
 
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
@@ -34,16 +54,19 @@ export default function MyRequests({ currentUserId }: MyRequestsProps) {
   );
 }
 
+
+
 interface RequestsListProps {
-  type: "incoming" | "outgoing";
+  type: 'incoming' | 'outgoing';
   userId: string;
 }
 
 function RequestsList({ type, userId }: RequestsListProps) {
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<any[]>([]);
-
-  async function load() {
+  const [items, setItems] = useState<Request[] | null>(null);
+  
+  const load = React.useCallback(async () => {
+      
     if (!userId) return;
     setLoading(true);
     try {
@@ -56,25 +79,25 @@ function RequestsList({ type, userId }: RequestsListProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [type, userId]);
 
   useEffect(() => {
     load(); // initial load
     const interval = setInterval(load, 15000); // poll every 15s
     return () => clearInterval(interval);
-  }, [userId]);
+  }, [load]);
 
   return (
     <div>
       <div className="mb-2 text-sm text-gray-500">Automatically refreshes every 15s</div>
       {loading && <div>Loading...</div>}
-      {!loading && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
-      {items.length > 0 && (
+      {!loading && items && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
+      {items && items.length > 0 && (
         <ul className="space-y-2 mt-2">
           {items.map((r: any) => (
             <li key={r._id} className="p-2 border rounded">
               <div className="font-semibold">
-                {type === "incoming" ? r.requestSender?.firstName || "Rider" : `To: ${r.driver?.firstName || "Driver"}`}
+                {type === "incoming" ? (typeof r.user === 'object' ? r.user.firstName : 'Rider') : `To: ${r.driver?.firstName || "Driver"}`}
               </div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
               {type === "incoming" && (
@@ -140,3 +163,5 @@ function RequestsList({ type, userId }: RequestsListProps) {
     </div>
   );
 }
+
+export default MyRequests;

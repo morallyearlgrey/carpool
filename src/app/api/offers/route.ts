@@ -1,7 +1,6 @@
 // src/app/api/offers/route.ts
 import { NextResponse } from 'next/server';
 import OfferModel from '@/lib/models/offer';
-import mongoose from 'mongoose';
 
 export async function POST(req: Request) {
   try {

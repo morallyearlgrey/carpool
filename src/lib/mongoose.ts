@@ -23,6 +23,7 @@ async function mongooseConnect() {
   }
   cached.conn = await cached.promise;
   return cached.conn;
+
 }
 
 export default mongooseConnect;

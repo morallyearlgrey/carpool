@@ -7,8 +7,8 @@ import { useSession } from "next-auth/react";
 
 const words = ["Smarter", "Faster", "Greener", "Connected"];
 
-const HomePage: React.FC = () => {
-  const { data: session, status } = useSession();
+export default function Home() {
+  const { status } = useSession();
   const isLoggedIn = status === "authenticated";
 
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -72,16 +72,18 @@ const HomePage: React.FC = () => {
             }`}
             style={{ transitionDelay: "200ms" }}
           >
-            <span
-              className={`transition-opacity duration-300 inline-block mr-4 sm:mr-4 ${
-                fade ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {words[currentWordIndex]}
-            </span>
-            <span className="inline-block text-[#3a3a5a] text-shadow">
+            <div className="block">
+              <span
+                className={`transition-opacity duration-300 inline-block mr-4 ${
+                  fade ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {words[currentWordIndex]}
+              </span>
+            </div>
+            <div className="block text-[#3a3a5a] text-shadow">
               commuting
-            </span>
+            </div>
           </h1>
 
           {/* Paragraph */}
@@ -119,6 +121,4 @@ const HomePage: React.FC = () => {
       </footer>
     </div>
   );
-};
-
-export default HomePage;
+}

@@ -56,7 +56,8 @@ export async function POST(req: NextRequest) {
     const result = await db.collection("users").insertOne(userDoc);
     console.log("User created successfully:", result.insertedId);
 
-    const { password: _omit, ...userWithoutPassword } = userDoc;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = userDoc;
 
     return NextResponse.json({ 
       user: { 
@@ -64,12 +65,13 @@ export async function POST(req: NextRequest) {
         ...userWithoutPassword 
       } 
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST user error:", error);
-    console.error("Error stack:", error.stack);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json({ 
       error: "Failed to create user", 
-      details: error.message 
+      details: errorMessage 
     }, { status: 500 });
   }
 }

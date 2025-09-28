@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import OfferModel from '@/lib/models/offer';
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await OfferModel.findByIdAndDelete(params.id);
+    const { id } = await params;
+    await OfferModel.findByIdAndDelete(id);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error(err);
