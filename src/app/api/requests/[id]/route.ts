@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server';
+// src/app/api/requests/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import RequestModel from '@/lib/models/request';
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     await RequestModel.findByIdAndDelete(id);
     return NextResponse.json({ success: true });
   } catch (err) {

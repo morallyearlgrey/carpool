@@ -1,87 +1,146 @@
 "use client";
 
-import React, { useState } from 'react';
-import RecommendedRides from './RecommendedRides';
+import React, { useState } from "react";
+import RecommendedRides from "./RecommendedRides";
 
 interface Ride {
   _id: string;
   driver: string;
   riders: Array<{
-    user: string;
-    request: string;
+    user: { _id: string; firstName: string; lastName: string; email: string };
+    request: { _id: string; startTime: string; finalTime: string; status: string };
     orderPickUp: number;
   }>;
   date: Date;
   startTime: string;
-  endTime: string;
+  finalTime: string;
   beginLocation: { lat: number; long: number };
   finalLocation: { lat: number; long: number };
   requestedRiders: string[];
   maxRiders: number;
+  beginAddress?: string;
+  finalAddress?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export default function MyRides({ currentUserId }:{ currentUserId: string }){
-  const [tab, setTab] = useState<'recommendations'|'myrides'>('recommendations');
+async function getAddress(lat: number, lng: number) {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return `${lat}, ${lng}`;
+
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+  );
+  const data = await res.json();
+  if (data.status === "OK") {
+    return data.results[0].formatted_address;
+  } else {
+    console.error("Geocoding error:", data.status);
+    return `${lat}, ${lng}`;
+  }
+}
+
+export default function MyRides({ currentUserId }: { currentUserId: string }) {
+  const [tab, setTab] = useState<"recommendations" | "myrides">("recommendations");
 
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-purple-800">My Rides</h2>
         <div className="flex gap-2">
-          <button onClick={()=>setTab('recommendations')} className={`px-3 py-1 rounded ${tab==='recommendations'?'bg-purple-600 text-white':''}`}>Recommendations</button>
-          <button onClick={()=>setTab('myrides')} className={`px-3 py-1 rounded ${tab==='myrides'?'bg-purple-600 text-white':''}`}>My Rides</button>
+          <button
+            onClick={() => setTab("recommendations")}
+            className={`px-3 py-1 rounded ${tab === "recommendations" ? "bg-purple-600 text-white" : ""}`}
+          >
+            Recommendations
+          </button>
+          <button
+            onClick={() => setTab("myrides")}
+            className={`px-3 py-1 rounded ${tab === "myrides" ? "bg-purple-600 text-white" : ""}`}
+          >
+            My Rides
+          </button>
         </div>
       </div>
 
-      {tab === 'recommendations' && (
+      {tab === "recommendations" && (
         <div>
-          <RecommendedRides currentUserId={currentUserId} request={{ date: new Date().toISOString(), startTime: '08:30', beginLocation: { lat: 37.77, long: -122.42 }, finalLocation: { lat: 37.79, long: -122.39 } }} mode={'schedules'} />
+          <RecommendedRides
+            currentUserId={currentUserId}
+            request={{
+              date: new Date().toISOString(),
+              startTime: "08:30",
+              beginLocation: { lat: 37.77, long: -122.42 },
+              finalLocation: { lat: 37.79, long: -122.39 },
+            }}
+            mode={"schedules"}
+          />
         </div>
       )}
 
-      {tab === 'myrides' && (
+      {tab === "myrides" && (
         <div>
           <p className="text-sm text-gray-600">Your active rides (fetched from /api/rides/mine):</p>
-          <MyRidesList />
+          <MyRidesList currentUserId={currentUserId} />
         </div>
       )}
     </div>
   );
+}
 
-  function MyRidesList(){
-    const [loading, setLoading] = useState(false);
-    const [rides, setRides] = useState<Ride[] | null>(null);
+function MyRidesList({ currentUserId }: { currentUserId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [rides, setRides] = useState<Ride[] | null>(null);
 
-    async function load(){
-      setLoading(true);
-      try{
-        const res = await fetch('/api/rides/mine');
-        const data = await res.json();
-        setRides(data.rides || []);
-      }catch(err){
-        console.error(err);
-        setRides([]);
-      }finally{setLoading(false)}
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/rides/mine?id=${currentUserId}`);
+      const data = await res.json();
+      const rides: Ride[] = data.rides || [];
+
+      // Fetch addresses for each ride
+      const ridesWithAddresses = await Promise.all(
+        rides.map(async (r) => {
+          const beginAddress = await getAddress(r.beginLocation.lat, r.beginLocation.long);
+          const finalAddress = await getAddress(r.finalLocation.lat, r.finalLocation.long);
+          return { ...r, beginAddress, finalAddress };
+        })
+      );
+
+      setRides(ridesWithAddresses);
+    } catch (err) {
+      console.error(err);
+      setRides([]);
+    } finally {
+      setLoading(false);
     }
-
-    return (
-      <div>
-        <button onClick={load} className="px-3 py-1 bg-purple-600 text-white rounded mb-2">Load My Rides</button>
-        {loading && <div>Loading...</div>}
-        {rides && rides.length === 0 && <div className="text-sm text-gray-600">No rides found.</div>}
-        {rides && rides.length > 0 && (
-          <ul className="space-y-2 mt-2">
-            {rides.map(r => (
-              <li key={r._id} className="p-2 border rounded">
-                <div className="font-semibold">Ride {r._id}</div>
-                <div className="text-sm text-gray-600">{r.startTime} — {r.endTime}</div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    )
   }
+
+  return (
+    <div>
+      <button onClick={load} className="px-3 py-1 bg-purple-600 text-white rounded mb-2">
+        Load My Rides
+      </button>
+      {loading && <div>Loading...</div>}
+      {rides && rides.length === 0 && <div className="text-sm text-gray-600">No rides found.</div>}
+      {rides && rides.length > 0 && (
+        <ul className="space-y-2 mt-2">
+          {rides.map((r) => (
+            <li key={r._id} className="p-2 border rounded">
+              <div className="font-semibold">
+                Ride at {r.beginAddress} → {r.finalAddress}
+              </div>
+              <div className="text-sm text-gray-600">
+                {r.startTime} — {r.finalTime}
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Riders: {r.riders.map((ri) => ri.user.firstName).join(", ")}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
