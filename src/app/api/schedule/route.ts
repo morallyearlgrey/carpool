@@ -62,3 +62,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: detail }, { status: 500 });
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    await clientPromise;
+    await mongooseConnect;
+    const session = await getServerSession(authOptions as any);
+    const userId = (session as any)?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'not authenticated' }, { status: 401 });
+
+    const existing = await Schedule.findOne({ user: userId });
+    if (!existing) return NextResponse.json({ ok: true, schedule: null });
+    return NextResponse.json({ ok: true, schedule: existing });
+  } catch (err: any) {
+    console.error('Error in GET /api/schedule:', err?.message || err);
+    return NextResponse.json({ error: err?.message || 'server error' }, { status: 500 });
+  }
+}

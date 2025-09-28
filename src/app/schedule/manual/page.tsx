@@ -22,15 +22,23 @@ type SlotType = {
 	finalLng?: number | null;
 };
 
+function emptySlot(day: string): SlotType {
+	return { day, startTime: '', endTime: '', beginAddress: '', finalAddress: '', beginLat: null, beginLng: null, finalLat: null, finalLng: null };
+}
+
 export default function ManualSchedulePage(){
 	const { data: session, status } = useSession();
 	const isLoggedIn = status === 'authenticated';
 
-	const [slots, setSlots] = useState<SlotType[]>(
-		weekdays.map(day=>({ day, startTime: '', endTime: '', beginAddress: '', finalAddress: '', beginLat: null, beginLng: null, finalLat: null, finalLng: null }))
-	);
+	// store multiple slots per weekday
+	const [slotsByDay, setSlotsByDay] = useState<Record<DayName, SlotType[]>>(() => {
+		const r: any = {};
+		weekdays.forEach(d => r[d] = []);
+		return r;
+	});
 
 	const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
+	const [editingSlotIndex, setEditingSlotIndex] = useState<number | null>(null);
 	// local inputs for the selected day
 	const [localStart, setLocalStart] = useState<string>('');
 	const [localDuration, setLocalDuration] = useState<number>(30); // minutes
@@ -46,7 +54,7 @@ export default function ManualSchedulePage(){
         if (typeof window === 'undefined') return;
         
         const analyzedScheduleData = sessionStorage.getItem('analyzedSchedule');
-        if (analyzedScheduleData) {
+				if (analyzedScheduleData) {
             try {
                 const parsedSchedule = JSON.parse(analyzedScheduleData);
                 if (parsedSchedule.availableTimes && Array.isArray(parsedSchedule.availableTimes)) {
@@ -71,7 +79,16 @@ export default function ManualSchedulePage(){
                         return { day, startTime: '', endTime: '', beginAddress: '', finalAddress: '' };
                     });
                     
-					setSlots(newSlots.map((s: any) => ({ ...s, beginLat: null, beginLng: null, finalLat: null, finalLng: null })));
+					// build slotsByDay from analyzed schedule
+					const byDay: Record<DayName, SlotType[]> = weekdays.reduce((acc, d) => { acc[d] = []; return acc; }, {} as Record<DayName, SlotType[]> );
+					for (const nt of parsedSchedule.availableTimes) {
+						const dayName = (nt.day || '').toString();
+						const matched = weekdays.find(w => w.toLowerCase() === dayName.toLowerCase());
+						if (matched) {
+							byDay[matched].push({ ...emptySlot(matched), startTime: nt.startTime || '', endTime: nt.endTime || '', beginAddress: '', finalAddress: '' });
+						}
+					}
+					setSlotsByDay(byDay);
                     setMessage('Schedule loaded from image analysis! Please add addresses as needed.');
                     
                     // Clear the session storage after loading
@@ -90,48 +107,105 @@ export default function ManualSchedulePage(){
         // If no analyzed schedule data, form starts empty (default behavior)
     }, []);
 
-    function updateSlot(index:number, patch: Partial<SlotType>) {
-        setSlots(prev=>{
-            const copy = [...prev];
-            copy[index] = { ...copy[index], ...patch };
-            return copy;
-        });
-    }
+	// When session is ready, fetch saved schedule from server and populate slotsByDay
+	useEffect(() => {
+		if (!session || (status !== 'authenticated')) return;
+
+		let cancelled = false;
+		(async () => {
+			try {
+				const res = await fetch('/api/schedule');
+				if (!res.ok) return;
+				const data = await res.json();
+				if (cancelled) return;
+				const sched = data?.schedule;
+				if (sched && Array.isArray(sched.availableTimes)) {
+					const byDay: Record<DayName, SlotType[]> = weekdays.reduce((acc, d) => { acc[d] = []; return acc; }, {} as Record<DayName, SlotType[]> );
+					for (const t of sched.availableTimes) {
+						const dayName = (t.day || '').toString();
+						const matched = weekdays.find(w => w.toLowerCase() === dayName.toLowerCase());
+						if (matched) {
+							byDay[matched].push({
+								day: matched,
+								startTime: t.startTime || '',
+								endTime: t.endTime || '',
+								beginAddress: (t.beginLocation && t.beginLocation.address) || '',
+								finalAddress: (t.finalLocation && t.finalLocation.address) || '',
+								beginLat: t.beginLocation && typeof t.beginLocation.lat === 'number' ? t.beginLocation.lat : null,
+								beginLng: t.beginLocation && typeof t.beginLocation.long === 'number' ? t.beginLocation.long : null,
+								finalLat: t.finalLocation && typeof t.finalLocation.lat === 'number' ? t.finalLocation.lat : null,
+								finalLng: t.finalLocation && typeof t.finalLocation.long === 'number' ? t.finalLocation.long : null,
+							});
+						}
+					}
+					setSlotsByDay(byDay);
+					setMessage('Loaded saved schedule');
+				}
+			} catch (err) {
+				console.error('Failed to load saved schedule', err);
+			}
+		})();
+		return () => { cancelled = true; };
+	}, [session, status]);
+
+	function addOrUpdateSlotForDay(dayIndex: number, slot: SlotType, editIndex: number | null = null) {
+		const day = weekdays[dayIndex];
+		setSlotsByDay(prev => {
+			const copy = { ...prev } as Record<DayName, SlotType[]>;
+			const arr = [...(copy[day] || [])];
+			if (editIndex !== null && editIndex >= 0 && editIndex < arr.length) {
+				arr[editIndex] = slot;
+			} else {
+				arr.push(slot);
+			}
+			copy[day] = arr;
+			return copy;
+		});
+	}
+
+	function removeSlotForDay(dayIndex: number, slotIndex: number) {
+		const day = weekdays[dayIndex];
+		setSlotsByDay(prev => {
+			const copy = { ...prev } as Record<DayName, SlotType[]>;
+			const arr = [...(copy[day] || [])];
+			arr.splice(slotIndex, 1);
+			copy[day] = arr;
+			return copy;
+		});
+	}
 
 	function applyLocalToSelectedDay(){
 		if (selectedDayIndex === null) return;
 		const start = localStart;
 		const end = computeEndTime(localStart, localDuration);
-		// detect conflicts with other slots on the same day
-		const conflicts: number[] = [];
-		slots.forEach((s, idx) => {
-			if (idx === selectedDayIndex) return;
-			if (s.day !== slots[selectedDayIndex].day) return;
-			if (!s.startTime || !s.endTime) return;
-			// overlap check
-			const a1 = timeToMinutes(s.startTime);
-			const a2 = timeToMinutes(s.endTime);
-			const b1 = timeToMinutes(start);
-			const b2 = timeToMinutes(end);
-			if (Math.max(a1, b1) < Math.min(a2, b2)) {
-				conflicts.push(idx);
-			}
+
+		if (selectedDayIndex === null) return;
+		const day = weekdays[selectedDayIndex];
+		// check overlaps against existing slots for this day
+		const daySlots = slotsByDay[day] || [];
+		const overlaps: number[] = [];
+		const newStart = timeToMinutes(start);
+		const newEnd = timeToMinutes(end);
+		daySlots.forEach((s, idx) => {
+			const a = timeToMinutes(s.startTime);
+			const b = timeToMinutes(s.endTime);
+			if (Math.max(a, newStart) < Math.min(b, newEnd)) overlaps.push(idx);
 		});
 
-		if (conflicts.length > 0) {
-			const conflictTexts = conflicts.map(i => `${slots[i].day}: ${slots[i].startTime}–${slots[i].endTime}`).join('\n');
-			const proceed = confirm(`This slot conflicts with existing slots:\n${conflictTexts}\n\nRemove the conflicting slots and save the new one?`);
-			if (proceed) {
-				// remove conflicts first
-				const newSlots = slots.map((s, idx) => conflicts.includes(idx) ? { ...s, startTime: '', endTime: '', beginAddress: '', finalAddress: '', beginLat: null, beginLng: null, finalLat: null, finalLng: null } : s);
-				setSlots(newSlots);
-			} else {
-				setMessage('Save cancelled due to conflict');
-				return;
-			}
+		if (overlaps.length > 0) {
+			const conflictTexts = overlaps.map(i => `${daySlots[i].startTime}–${daySlots[i].endTime}`).join('\n');
+			const proceed = confirm(`This slot conflicts with existing slots on ${day}:\n${conflictTexts}\n\nRemove the conflicting slots and save the new one?`);
+			if (!proceed) { setMessage('Save cancelled due to conflict'); return; }
+			// remove conflicting slots
+			setSlotsByDay(prev => {
+				const copy = { ...prev } as Record<DayName, SlotType[]>;
+				copy[day] = (copy[day] || []).filter((_, i) => !overlaps.includes(i));
+				return copy;
+			});
 		}
 
-		updateSlot(selectedDayIndex, {
+		const slot: SlotType = {
+			day,
 			startTime: start,
 			endTime: end,
 			beginAddress: localBegin?.description || '',
@@ -140,8 +214,11 @@ export default function ManualSchedulePage(){
 			beginLng: localBegin?.lng ?? null,
 			finalLat: localFinal?.lat ?? null,
 			finalLng: localFinal?.lng ?? null,
-		});
-		setMessage(`Saved ${weekdays[selectedDayIndex]} slot`);
+		};
+
+		addOrUpdateSlotForDay(selectedDayIndex, slot, editingSlotIndex);
+		setEditingSlotIndex(null);
+		setMessage(`Saved ${day} slot`);
 	}
 
 	function computeEndTime(start: string, durationMinutes: number){
@@ -165,7 +242,8 @@ export default function ManualSchedulePage(){
 			}
 
 			// build availableTimes payload; include only filled slots (start+end present)
-			const filled = slots.filter(s => s.startTime && s.endTime);
+			// flatten all slots by day and filter filled
+			const filled = Object.values(slotsByDay).flat().filter(s => s.startTime && s.endTime);
 			if (filled.length === 0) {
 				setMessage('No slots to save. Please add at least one day slot before saving.');
 				setSaving(false);
@@ -209,27 +287,29 @@ export default function ManualSchedulePage(){
 
 				<div className="mb-4">
 					<div className="flex gap-2 flex-wrap">
-						{slots.map((s, idx) => (
+						{weekdays.map((d, idx) => (
 							<button
-								key={s.day}
+								key={d}
 								onClick={() => {
 									setSelectedDayIndex(idx);
-									// load local values
-									setLocalStart(s.startTime || '17:00');
-									setLocalDuration(s.startTime && s.endTime ? timeDiffMinutes(s.startTime, s.endTime) : 30);
-									setLocalBegin(s.beginLat ? { lat: s.beginLat, lng: s.beginLng ?? undefined, description: s.beginAddress } : null);
-									setLocalFinal(s.finalLat ? { lat: s.finalLat, lng: s.finalLng ?? undefined, description: s.finalAddress } : null);
+									const arr = slotsByDay[d] || [];
+									const first = arr[0];
+									setEditingSlotIndex(null);
+									setLocalStart(first?.startTime || '17:00');
+									setLocalDuration(first && first.endTime ? timeDiffMinutes(first.startTime, first.endTime) : 30);
+									setLocalBegin(first?.beginLat ? { lat: first.beginLat, lng: first.beginLng ?? undefined, description: first.beginAddress } : null);
+									setLocalFinal(first?.finalLat ? { lat: first.finalLat, lng: first.finalLng ?? undefined, description: first.finalAddress } : null);
 								}}
 								className={`px-3 py-1 rounded ${selectedDayIndex===idx ? 'bg-purple-600 text-white' : 'bg-white border'}`}
 							>
-								{s.day.slice(0,3)}
+								{d.slice(0,3)} {slotsByDay[d]?.length ? `(${slotsByDay[d].length})` : ''}
 							</button>
 						))}
 					</div>
 				</div>
 
 				<div className="bg-white p-4 rounded shadow">
-					{!Number.isFinite(selectedDayIndex) && selectedDayIndex === null && (
+					{ selectedDayIndex === null && (
 						<div className="text-gray-600">Select a day above to begin.</div>
 					)}
 
@@ -278,10 +358,25 @@ export default function ManualSchedulePage(){
 							<div className="text-sm text-gray-600 mb-2">Preview: {localStart} — {computeEndTime(localStart, localDuration)}</div>
 
 							<div className="space-y-2">
-								<div className="text-sm">Saved slot:</div>
+								<div className="text-sm">Saved slots for {weekdays[selectedDayIndex]}:</div>
 								<div className="p-2 border rounded bg-gray-50">
-									<div className="text-sm">{slots[selectedDayIndex].startTime ? `${slots[selectedDayIndex].startTime} — ${slots[selectedDayIndex].endTime}` : <em>No slot saved yet</em>}</div>
-									<div className="text-xs text-gray-500">{slots[selectedDayIndex].beginAddress || 'No start address'} → {slots[selectedDayIndex].finalAddress || 'No end address'}</div>
+									{(slotsByDay[weekdays[selectedDayIndex]] || []).length === 0 && <em>No slots saved yet</em>}
+									{(slotsByDay[weekdays[selectedDayIndex]] || []).map((ss, si) => (
+										<div key={si} className="flex items-center justify-between py-1">
+											<div className="text-sm">{ss.startTime} — {ss.endTime} <span className="text-xs text-gray-500">{ss.beginAddress || ''} → {ss.finalAddress || ''}</span></div>
+											<div className="flex gap-2">
+												<button onClick={() => {
+													// load into editor for quick edit
+													setEditingSlotIndex(si);
+													setLocalStart(ss.startTime);
+													setLocalDuration(Math.max(15, timeDiffMinutes(ss.startTime, ss.endTime)));
+													setLocalBegin(ss.beginLat ? { lat: ss.beginLat, lng: ss.beginLng ?? undefined, description: ss.beginAddress } : null);
+													setLocalFinal(ss.finalLat ? { lat: ss.finalLat, lng: ss.finalLng ?? undefined, description: ss.finalAddress } : null);
+												}} className="text-xs text-blue-600">Edit</button>
+												<button onClick={() => removeSlotForDay(selectedDayIndex, si)} className="text-xs text-red-600">Remove</button>
+											</div>
+										</div>
+									))}
 								</div>
 							</div>
 						</div>
@@ -290,41 +385,55 @@ export default function ManualSchedulePage(){
 
 				<div className="flex items-center gap-3 mt-4">
 					<button onClick={handleSubmit as any} className="px-4 py-2 bg-[#663399] text-white rounded disabled:opacity-60">{saving ? 'Saving...' : 'Save Schedule'}</button>
-					<button onClick={()=>{ setSlots(weekdays.map(day=>({ day, startTime: '', endTime: '', beginAddress: '', finalAddress: '', beginLat: null, beginLng: null, finalLat: null, finalLng: null }))); setMessage(null); }} className="px-4 py-2 border rounded">Clear All</button>
+					<button onClick={()=>{ setSlotsByDay(weekdays.reduce((acc, d) => { acc[d as DayName] = []; return acc; }, {} as Record<DayName, SlotType[]>)); setMessage(null); }} className="px-4 py-2 border rounded">Clear All</button>
 					{message && <div className="ml-4 text-sm">{message}</div>}
 				</div>
 
 				<section className="mt-6">
-					<h2 className="font-semibold mb-2">Your schedule (compact view)</h2>
+					<h2 className="font-semibold mb-2">Your schedule</h2>
 					<div className="w-full overflow-auto border rounded bg-white p-3">
-						<div className="grid grid-cols-8 gap-1 items-center">
+						{/* Header row */}
+						<div className="grid grid-cols-8 border-b pb-2 mb-2">
 							<div className="text-xs text-gray-500">Time</div>
 							{weekdays.map(d => (
-								<div key={d} className="text-xs text-center text-gray-700">{d.slice(0,3)}</div>
+								<div key={d} className="text-xs text-center font-medium text-gray-700">{d}</div>
 							))}
 						</div>
 
-						{/* times 6:00-22:00 in 30min steps */}
-						{generateTimes('06:00','22:00',30).map(t => (
-							<div key={t} className="grid grid-cols-8 gap-1 items-center text-sm mt-1">
-								<div className="text-xs text-gray-500">{t}</div>
-								{slots.map((s, idx) => (
-									<div key={s.day} className="h-8">
-										{s.startTime && s.endTime && timeToMinutes(t) >= timeToMinutes(s.startTime) && timeToMinutes(t) < timeToMinutes(s.endTime) ? (
-											<div className="h-8 bg-purple-200 rounded flex items-center justify-center">
-												<button className="text-xs" onClick={() => {
-													if (!confirm(`Remove slot on ${s.day} ${s.startTime}-${s.endTime}?`)) return;
-													// remove slot
-													updateSlot(idx, { startTime: '', endTime: '', beginAddress: '', finalAddress: '', beginLat: null, beginLng: null, finalLat: null, finalLng: null });
-												}}>{s.startTime}</button>
-											</div>
-										) : (
-											<div className="h-8"></div>
-										)}
+						{/* Grid: we'll use absolute-positioned blocks inside a relative container */}
+						<div className="relative w-full" style={{ minHeight: `${(timeToMinutes('22:00')-timeToMinutes('06:00'))/30 * 32}px` }}>
+							{/* vertical time labels */}
+							<div className="absolute left-0 top-0 w-16 text-xs text-gray-500">
+								{generateTimes('06:00','22:00',30).map((t,i)=>(
+									<div key={t} style={{ height: 32 }} className="flex items-center">{t}</div>
+								))}
+							</div>
+
+							{/* weekdays columns */}
+							<div className="ml-16 grid grid-cols-7 gap-0">
+								{weekdays.map((d, colIndex) => (
+									<div key={d} className="relative border-l border-gray-100" style={{ minHeight: '100%' }}>
+										{/* column background lines */}
+										{generateTimes('06:00','22:00',30).map(t=> (
+											<div key={d+t} style={{ height: 32 }} className="border-b border-gray-100"></div>
+										))}
+
+													{/* slot blocks for this day (support multiple) */}
+													{(slotsByDay[d] || []).map((ss, si) => {
+														if (!ss.startTime || !ss.endTime) return null;
+														const topOffset = (timeToMinutes(ss.startTime) - timeToMinutes('06:00'))/30 * 32;
+														const span = Math.max(1, Math.round((timeToMinutes(ss.endTime) - timeToMinutes(ss.startTime))/30));
+														const height = span * 32 - 6;
+														return (
+															<div key={si} style={{ position: 'absolute', left: 6, right: 6, top: topOffset, height }} className="bg-purple-100 border border-purple-300 rounded p-2 flex items-center">
+																<div className="text-xs font-medium">{ss.startTime} — {ss.endTime}</div>
+															</div>
+														)
+													})}
 									</div>
 								))}
 							</div>
-						))}
+						</div>
 					</div>
 				</section>
 			</main>

@@ -3,6 +3,7 @@ import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from 'use-places-autocomplete';
+import { useLoadScript } from '@react-google-maps/api';
 
 interface PlacesAutocompleteProps {
   onAddressSelect: (address: { lat: number; lng: number; description: string }) => void;
@@ -10,6 +11,27 @@ interface PlacesAutocompleteProps {
 }
 
 const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = "Enter an address" }) => {
+  // Load the Google Maps Places API first. use-places-autocomplete requires the
+  // global `google` to be present (window.google.maps.places).
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries: ['places'],
+  });
+
+  if (loadError) {
+    return <div className="text-sm text-red-500">Failed to load Google Maps API</div>;
+  }
+
+  if (!isLoaded) {
+    return <div className="text-sm text-gray-500">Loading Places API...</div>;
+  }
+
+  // Only after the script has loaded do we render the inner component that uses the
+  // usePlacesAutocomplete hook. This avoids the runtime error from the library.
+  return <PlacesAutocompleteInner onAddressSelect={onAddressSelect} placeholder={placeholder} />;
+};
+
+const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = 'Enter an address' }) => {
   const {
     ready,
     value,
