@@ -93,27 +93,37 @@ function RequestsList({ type, userId }: RequestsListProps) {
     ) return;
 
     try {
-      let url = `/api/requests/${r._id}/respond`;
-      let body: any = { action };
-      let method = "POST";
-
       if (action === "cancel") {
-        url = `/api/requests/${r._id}`;
-        method = "DELETE";
-        body = null;
+        const res = await fetch(`/api/requests/${r._id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        if (!res.ok) throw new Error("Cancel failed");
+        setItems(prev => prev.filter(req => req._id !== r._id));
+        
       } else if (action === "claim") {
-        url = `/api/requests/${r._id}/claim`;
-        body = { driverId: userId };
+        // For claiming public requests, send 'accept' action with driverId
+        const res = await fetch(`/api/requests/${r._id}/respond`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: 'accept', driverId: userId }),
+        });
+        
+        if (!res.ok) throw new Error("Claim failed");
+        setItems(prev => prev.filter(req => req._id !== r._id));
+        
+      } else {
+        // For accept/reject actions
+        const res = await fetch(`/api/requests/${r._id}/respond`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+
+        if (!res.ok) throw new Error("Action failed");
+        setItems(prev => prev.filter(req => req._id !== r._id));
       }
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: body ? JSON.stringify(body) : null,
-      });
-
-      if (!res.ok) throw new Error("Action failed");
-      setItems(prev => prev.filter(req => req._id !== r._id));
     } catch (err) {
       console.error(err);
       alert("Action failed.");
