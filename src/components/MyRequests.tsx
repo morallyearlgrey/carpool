@@ -3,13 +3,13 @@ import React, { useState, useEffect } from "react";
 import { initDriverNotifications } from "@/lib/driverNotifications";
 
 interface MyRequestsProps {
-  currentUserId: string; // use string, not ObjectId
+  currentUserId: string;
 }
 
 export default function MyRequests({ currentUserId }: MyRequestsProps) {
   const [tab, setTab] = useState<"incoming" | "outgoing">("incoming");
 
-  // ✅ Register driver for push notifications on mount
+  // ✅ Register driver for push notifications when component mounts
   useEffect(() => {
     if (currentUserId) {
       initDriverNotifications(currentUserId);
@@ -51,6 +51,7 @@ function RequestsList({ type, userId }: RequestsListProps) {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
 
+  // ✅ Load requests and refresh every 15s
   async function load() {
     if (!userId) return;
     setLoading(true);
@@ -67,8 +68,8 @@ function RequestsList({ type, userId }: RequestsListProps) {
   }
 
   useEffect(() => {
-    load(); // initial load
-    const interval = setInterval(load, 15000); // poll every 15s
+    load();
+    const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, [userId]);
 
@@ -82,7 +83,9 @@ function RequestsList({ type, userId }: RequestsListProps) {
           {items.map((r) => (
             <li key={r._id} className="p-2 border rounded">
               <div className="font-semibold">
-                {type === "incoming" ? r.requestSender?.firstName || "Rider" : `To: ${r.driver?.firstName || "Driver"}`}
+                {type === "incoming"
+                  ? r.requestSender?.firstName || "Rider"
+                  : `To: ${r.driver?.firstName || "Driver"}`}
               </div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
               {type === "outgoing" && (

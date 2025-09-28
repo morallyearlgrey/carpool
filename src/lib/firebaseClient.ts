@@ -1,6 +1,8 @@
-import { initializeApp, getApps } from "firebase/app";
+// src/lib/firebaseClient.ts
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getMessaging } from "firebase/messaging";
 
+// Your Firebase config (use .env for API keys)
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
@@ -10,5 +12,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// Initialize Firebase app (singleton)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Initialize messaging
 export const messaging = getMessaging(app);
