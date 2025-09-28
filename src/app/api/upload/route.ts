@@ -22,12 +22,12 @@ export async function POST(request: NextRequest) {
 
     const genAI = initializeGemini();
     const model = genAI.getGenerativeModel({
-      model: "models/gemini-2.5-flash",
+      model: "models/gemini-2.5-flash-lite",
       generationConfig: {
         temperature: 1,
         topK: 64,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 10000,
         responseMimeType: "application/json",
       },
     });

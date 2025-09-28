@@ -37,3 +37,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server error' }, { status: 500 });
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    await mongooseConnect();
+
+    // Find all requests where requestReceiver is null (public requests)
+    const requests = await RequestModel.find({ requestReceiver: null })
+      .populate("requestSender", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ requests });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}

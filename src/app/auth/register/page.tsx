@@ -96,7 +96,7 @@ export default function RegisterPage() {
             router.push("/auth/signin");
         } else {
             // On success, send the new user to the schedule maker page
-            router.push("/schedule");
+            router.push("/auth/signin");
         }
         } catch (err: unknown) {
             console.error('Registration error:', err);
