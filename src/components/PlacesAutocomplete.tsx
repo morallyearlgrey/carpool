@@ -4,9 +4,11 @@ import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocom
 interface PlacesAutocompleteProps {
   onAddressSelect: (address: { lat: number; lng: number; description: string }) => void;
   placeholder?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
 }
 
-const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = "Enter an address" }) => {
+const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = "Enter an address", value, onValueChange }) => {
   // Implement a safe, idempotent loader for the Google Maps Places API. Some
   // other components (e.g. MapComponent) may already inject the script tag; if
   // so we should not inject it again. We also wait for `window.google.maps.places`
@@ -70,13 +72,13 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect
 
   // Only after the script has loaded do we render the inner component that uses the
   // usePlacesAutocomplete hook. This avoids the runtime error from the library.
-  return <PlacesAutocompleteInner onAddressSelect={onAddressSelect} placeholder={placeholder} />;
+  return <PlacesAutocompleteInner onAddressSelect={onAddressSelect} placeholder={placeholder} value={value} onValueChange={onValueChange} />;
 };
 
-const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = 'Enter an address' }) => {
+const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = 'Enter an address', value: externalValue, onValueChange }) => {
   const {
     ready,
-    value,
+    value: internalValue,
     suggestions: { status, data },
     setValue,
     clearSuggestions,
@@ -84,8 +86,17 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
     debounce: 300,
   });
 
+  // Sync external value with internal value
+  React.useEffect(() => {
+    if (externalValue !== undefined && externalValue !== internalValue) {
+      setValue(externalValue, false);
+    }
+  }, [externalValue, internalValue, setValue]);
+
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+    const newValue = e.target.value;
+    setValue(newValue);
+    onValueChange?.(newValue);
   };
 
   const handleSelect = ({ description }: { description: string }) => async () => {
@@ -122,7 +133,7 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
   return (
     <div className="relative w-full">
       <input
-        value={value}
+        value={externalValue !== undefined ? externalValue : internalValue}
         onChange={handleInput}
         disabled={!ready}
         placeholder={placeholder}
