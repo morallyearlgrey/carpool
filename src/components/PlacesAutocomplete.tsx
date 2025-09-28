@@ -1,9 +1,5 @@
-import React from 'react';
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from 'use-places-autocomplete';
-import { useLoadScript } from '@react-google-maps/api';
+import React, { useEffect, useState } from 'react';
+import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 
 interface PlacesAutocompleteProps {
   onAddressSelect: (address: { lat: number; lng: number; description: string }) => void;
@@ -11,15 +7,59 @@ interface PlacesAutocompleteProps {
 }
 
 const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = "Enter an address" }) => {
-  // Load the Google Maps Places API first. use-places-autocomplete requires the
-  // global `google` to be present (window.google.maps.places).
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
-  });
+  // Implement a safe, idempotent loader for the Google Maps Places API. Some
+  // other components (e.g. MapComponent) may already inject the script tag; if
+  // so we should not inject it again. We also wait for `window.google.maps.places`
+  // to be available before rendering the inner autocomplete component.
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const win: any = window as any;
+
+    // If the Places library is already present, we're done.
+    if (win.google && win.google.maps && win.google.maps.places) {
+      setIsLoaded(true);
+      return;
+    }
+
+    // If a Google Maps script tag already exists on the page, hook its load event
+    // instead of injecting a new one.
+    const existing = Array.from(document.getElementsByTagName('script')).find(s => s.src && s.src.includes('maps.googleapis.com')) as HTMLScriptElement | undefined;
+    if (existing) {
+      if (win.google && win.google.maps && win.google.maps.places) {
+        setIsLoaded(true);
+        return;
+      }
+      const onLoad = () => setIsLoaded(true);
+      const onError = () => setLoadError('Failed to load Google Maps API');
+      existing.addEventListener('load', onLoad);
+      existing.addEventListener('error', onError);
+      return () => {
+        existing.removeEventListener('load', onLoad);
+        existing.removeEventListener('error', onError);
+      };
+    }
+
+    // Otherwise, inject the script ourselves (only once).
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    if (!key) {
+      setLoadError('Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+    s.async = true;
+    s.defer = true;
+    s.onload = () => setIsLoaded(true);
+    s.onerror = () => setLoadError('Failed to load Google Maps API');
+    document.head.appendChild(s);
+    // no cleanup: let the script remain for other components
+  }, []);
 
   if (loadError) {
-    return <div className="text-sm text-red-500">Failed to load Google Maps API</div>;
+    return <div className="text-sm text-red-500">{loadError}</div>;
   }
 
   if (!isLoaded) {
