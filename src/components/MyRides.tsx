@@ -1,12 +1,12 @@
 'use client';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import RecommendedRides from "./RecommendedRides";
 
 interface Ride {
   _id: string;
   driver: string;
   riders: Array<{
-    user: { _id: string; firstName: string; lastName: string; email } | string;
+    user: { _id: string; firstName: string; lastName: string; email: string } | string;
     request: { _id: string; startTime: string; finalTime: string; status: string };
     orderPickUp: number;
   }>;
@@ -44,7 +44,7 @@ export default function MyRides({ currentUserId }: { currentUserId: string }) {
           {["recommendations", "myrides"].map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t as any)}
+              onClick={() => setTab(t as "recommendations" | "myrides")}
               className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                 tab === t
                   ? "bg-[#6c62fe] text-white shadow-lg transform scale-105"
@@ -89,7 +89,7 @@ function MyRidesList({ currentUserId }: { currentUserId: string }) {
   const [loading, setLoading] = useState(false);
   const [rides, setRides] = useState<Ride[] | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/rides/mine?id=${currentUserId}`);
@@ -111,11 +111,11 @@ function MyRidesList({ currentUserId }: { currentUserId: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentUserId]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">

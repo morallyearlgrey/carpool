@@ -7,7 +7,7 @@ interface MapComponentProps {
   onRouteSelected?: (route: {
     start: { latLng: google.maps.LatLng; address: string };
     end: { latLng: google.maps.LatLng; address: string };
-  }) => void;
+  }, durationSeconds?: number) => void;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
@@ -19,19 +19,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
 
   const [startAddress, setStartAddress] = useState('');
   const [endAddress, setEndAddress] = useState('');
-
-  // If the Google Maps script is already present (e.g. loaded by another component),
-  // initialize the map on mount. This helps with client-side route transitions.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const win: any = window as any;
-    if (win.google && win.google.maps && win.google.maps.places) {
-      // Defer slightly to ensure DOM refs are ready
-      setTimeout(() => {
-        try { initMap(); } catch (e) { /* ignore init errors */ }
-      }, 0);
-    }
-  }, []);
 
   // Helper: Reverse geocode LatLng → address
   const geocodeLatLng = (latLng: google.maps.LatLng, callback: (address: string) => void) => {
@@ -195,7 +182,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         }
       });
     }
-  }, [onRouteSelected]);
+  }, [onRouteSelected, endAddress, startAddress]);
 
   // If the Google Maps script is already present (e.g. loaded by another component),
   // initialize the map on mount. This helps with client-side route transitions.
@@ -210,6 +197,19 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
         try { initMap(); } catch {
           /* ignore init errors */
         }
+      }, 0);
+    }
+  }, [initMap]);
+
+  // If the Google Maps script is already present (e.g. loaded by another component),
+  // initialize the map on mount. This helps with client-side route transitions.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const win = window as unknown as { google?: typeof google };
+    if (win.google && win.google.maps && win.google.maps.places) {
+      // Defer slightly to ensure DOM refs are ready
+      setTimeout(() => {
+        try { initMap(); } catch { /* ignore init errors */ }
       }, 0);
     }
   }, [initMap]);

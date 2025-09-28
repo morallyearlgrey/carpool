@@ -9,17 +9,21 @@ import { Navbar } from '@/components/navbar';
 
 const MapComponent = dynamic(() => import('@/components/MapComponent'), { ssr: false });
 
+interface ExtendedSession {
+  user?: {
+    id?: string;
+    email?: string | null;
+  };
+}
+
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const isLoggedIn = status === 'authenticated';
 
-  const [currentRideId, setCurrentRideId] = useState<string | null>(null);
   const [showComponent, setShowComponent] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const [offerLoading, setOfferLoading] = useState(false);
-
-  const [requestResults, setRequestResults] = useState<any[] | null>(null);
 
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
@@ -41,8 +45,7 @@ const [startTime, setStartTime] = useState(getCurrentTime());
     setShowComponent(true);
   }, []);
 
-  const animationClasses = () =>
-    `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
+  const animationClasses = `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   // --- Handlers ---
   const handleRequestSubmit = async () => {
@@ -53,7 +56,7 @@ const [startTime, setStartTime] = useState(getCurrentTime());
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+        userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
         mode: 'rides',
         date,
         startTime,
@@ -64,11 +67,10 @@ const [startTime, setStartTime] = useState(getCurrentTime());
 
     const data = await res.json();
     const candidates = data.candidates || [];
-    let rideId: string | null = null;
 
     if (candidates.length > 0) {
-      setRequestResults(candidates);
-      rideId = candidates[0]?._id || null;
+      // Handle successful matches
+      console.log('Found matching rides:', candidates);
     } else {
       const publicRes = await fetch('/api/requests/public', {
         method: 'POST',
@@ -83,10 +85,8 @@ const [startTime, setStartTime] = useState(getCurrentTime());
         }),
       });
       const publicData = await publicRes.json();
-      rideId = publicData.requestId;
-      setRequestResults([]);
+      console.log('Created public request:', publicData.requestId);
     }
-    setCurrentRideId(rideId);
     alert("Your request has been posted")
   } catch (err) {
     console.error(err);
@@ -104,7 +104,7 @@ const handleOfferSubmit = async () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+        userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
         beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
         finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
         date,
@@ -113,8 +113,7 @@ const handleOfferSubmit = async () => {
       }),
     });
     const data = await res.json();
-    setCurrentRideId(data.offer?._id || null);
-    setRequestResults([]);
+    console.log('Created offer:', data.offer?._id);
     alert("Your offer has been posted!")
   } catch (err) {
     console.error(err);
@@ -133,22 +132,22 @@ const handleOfferSubmit = async () => {
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 px-8 pb-8 h-full">
 {/* LEFT COLUMN */}
 {/* LEFT COLUMN */}
-<div className={`lg:col-span-1 flex flex-col gap-4 p-6 overflow-hidden ${animationClasses('100ms')}`}>
+<div className={`lg:col-span-1 flex flex-col gap-4 p-6 overflow-hidden ${animationClasses}`}>
   {/* MyRides card */}
   <div className="flex flex-col flex-[1_1_0] overflow-hidden">
-    <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
+    <MyRides currentUserId={(session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || ''} />
   </div>
 
   {/* MyRequests card */}
-  {session?.user?.id && (
+  {(session as ExtendedSession)?.user?.id && (
     <div className="flex flex-col flex-[1_1_0] overflow-hidden">
-      <MyRequests currentUserId={session.user.id} />
+      <MyRequests currentUserId={(session as ExtendedSession).user!.id!} />
     </div>
   )}
 </div>
 
 {/* MIDDLE + RIGHT COLUMN (controls + map) */}
-<div className={`lg:col-span-2 flex flex-col h-full min-h-0 ${animationClasses('200ms')}`}>
+<div className={`lg:col-span-2 flex flex-col h-full min-h-0 ${animationClasses}`}>
   {/* Compact Controls Row */}
   <div className="flex flex-wrap items-center gap-2 bg-white/70 rounded-lg p-2 shadow-sm">
     <input
@@ -191,7 +190,7 @@ const handleOfferSubmit = async () => {
   <div className="flex-grow mt-3 min-h-0 rounded-md overflow-hidden shadow-lg">
     {showComponent && (
       <MapComponent
-          onRouteSelected={(route, durationSeconds) => {
+          onRouteSelected={(route, durationSeconds?) => {
             setStart(route.start);
             setEnd(route.end);
 
