@@ -1,0 +1,8 @@
+packages:
+  - '.'   # your current folder with package.json
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - bcrypt
+  - sharp
+  - unrs-resolver'
