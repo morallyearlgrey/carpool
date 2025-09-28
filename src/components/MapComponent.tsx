@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Script from 'next/script';
 
 interface MapComponentProps {
@@ -41,7 +41,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
     });
   };
 
-  const initMap = () => {
+  const initMap = useCallback(() => {
     // avoid double-init
     if (directionsRendererRef.current) return;
     if (!mapRef.current) return;
@@ -137,7 +137,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
       if (markersRef.current.length >= 2) {
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
-        directionsRenderer.setDirections({ routes: [] } as google.maps.DirectionsResult);
+        directionsRenderer.setDirections({ routes: [] } as unknown as google.maps.DirectionsResult);
         infoBoxRef.current!.innerText = '';
         setStartAddress('');
         setEndAddress('');
@@ -160,7 +160,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
           markersRef.current[0].setMap(null);
           markersRef.current.shift();
         }
-        addMarker(place.geometry.location, 'Start');
+        if (place.geometry?.location) {
+          addMarker(place.geometry.location, 'Start');
+        }
       });
     }
 
@@ -174,10 +176,29 @@ const MapComponent: React.FC<MapComponentProps> = ({ onRouteSelected }) => {
           markersRef.current[1].setMap(null);
           markersRef.current.pop();
         }
-        addMarker(place.geometry.location, 'End');
+        if (place.geometry?.location) {
+          addMarker(place.geometry.location, 'End');
+        }
       });
     }
-  };
+  }, [onRouteSelected]);
+
+  // If the Google Maps script is already present (e.g. loaded by another component),
+  // initialize the map on mount. This helps with client-side route transitions.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const win = window as typeof window & {
+      google?: typeof google;
+    };
+    if (win.google && win.google.maps && win.google.maps.places) {
+      // Defer slightly to ensure DOM refs are ready
+      setTimeout(() => {
+        try { initMap(); } catch {
+          /* ignore init errors */
+        }
+      }, 0);
+    }
+  }, [initMap]);
 
   return (
     <>
