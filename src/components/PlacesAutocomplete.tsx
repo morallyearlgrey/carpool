@@ -9,12 +9,11 @@ interface PlacesAutocompleteProps {
 }
 
 const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ onAddressSelect, placeholder = "Enter an address", value, onValueChange }) => {
-  // Load the Google Maps Places API first. use-places-autocomplete requires the
-  // global `google` to be present (window.google.maps.places).
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
-  });
+  // Implement a safe, idempotent loader for the Google Maps Places API. Some
+  // other components (e.g. MapComponent) may already inject the script tag; if
+  // so we should not inject it again. We also wait for `window.google.maps.places`
+  // to be available before rendering the inner autocomplete component.
+  const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
