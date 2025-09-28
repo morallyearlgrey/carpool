@@ -132,7 +132,13 @@ const PlacesAutocompleteInner: React.FC<PlacesAutocompleteProps> = ({ onAddressS
 
   return (
     <div className="relative w-full">
-      <input value={value} onChange={handleInput} disabled={!ready} placeholder={placeholder} className="w-full p-2 border rounded" />
+      <input
+        value={internalValue} // <-- fixed
+        onChange={handleInput}
+        disabled={!ready}
+        placeholder={placeholder}
+        className="w-full p-2 border rounded"
+      />
 
       {status === 'OK' && (
         <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">{renderSuggestions()}</ul>

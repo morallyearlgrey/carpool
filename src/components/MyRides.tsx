@@ -28,7 +28,7 @@ export default function MyRides({ currentUserId }:{ currentUserId: string }){
   return (
     <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-xl p-6 shadow-lg shadow-purple-500/10 flex-grow">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-purple-800">My Rides</h2>
+        <h2 className="text-xl font-bold text-purple-800">My Rides</h2>
         <div className="flex gap-2">
           <button onClick={()=>setTab('recommendations')} className={`px-3 py-1 rounded ${tab==='recommendations'?'bg-purple-600 text-white':''}`}>Recommendations</button>
           <button onClick={()=>setTab('myrides')} className={`px-3 py-1 rounded ${tab==='myrides'?'bg-purple-600 text-white':''}`}>My Rides</button>
