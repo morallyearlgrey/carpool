@@ -5,7 +5,10 @@ import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import MyRides from '@/components/MyRides';
 import MyRequests from '@/components/MyRequests';
+import { initDriverNotifications } from "@/lib/driverNotifications";
 import { Navbar } from '@/components/navbar';
+
+
 
 // Dynamically import MapComponent so it only renders on the client
 const MapComponent = dynamic(() => import('@/components/MapComponent'), { ssr: false });
@@ -61,10 +64,16 @@ const DashboardPage = () => {
   const [start, setStart] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
   const [end, setEnd] = useState<{ latLng: google.maps.LatLng; address: string } | null>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-    setShowComponent(true);
-  }, []);
+ useEffect(() => {
+  setIsMounted(true);
+  setShowComponent(true);
+
+  if (session?.user?.id) {
+    initDriverNotifications(session.user.id);
+  }
+}, [session?.user?.id]);
+
+  
 
   const animationClasses = (delay: string) =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;

@@ -5,7 +5,7 @@ import Request from "@/lib/models/request";
 
 export async function GET(req: NextRequest) {
   try {
-    await mongooseConnect;
+    await mongooseConnect();
 
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("id");

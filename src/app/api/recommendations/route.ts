@@ -19,7 +19,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function POST(req: NextRequest) {
   try {
-    await mongooseConnect;
+    await mongooseConnect();
     const body = await req.json();
 
     const { userId, date, startTime, beginLocation, finalLocation, mode } = body;

@@ -43,3 +43,5 @@ next-env.d.ts
 
 # Nixos shell script not needed to be pushed to repository - get rid of for devpost submission -- Yousef
 shell.nix
+
+firebase-service-account.json
