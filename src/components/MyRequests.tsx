@@ -25,7 +25,7 @@ interface Request {
   updatedAt?: Date;
 }
 
-function MyRequests() {
+function MyRequests({ currentUserId }: MyRequestsProps) {
   const [tab, setTab] = useState<'incoming'|'outgoing'>('incoming');
 
   return (
@@ -54,53 +54,18 @@ function MyRequests() {
   );
 }
 
-function IncomingRequests(){
-  const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<Request[] | null>(null);
 
-  async function load(){
-    setLoading(true);
-    try{
-      const res = await fetch('/api/requests/incoming');
-      const data = await res.json();
-      setItems(data.requests || []);
-    }catch(err){
-      console.error(err);
-      setItems([]);
-    }finally{setLoading(false)}
-  }
 
-  React.useEffect(() => {
-    // initial load
-    load();
-    // poll every 15s
-    const iv = setInterval(load, 15000);
-    return () => clearInterval(iv);
-  }, []);
-
-  return (
-    <div>
-      <div className="mb-2 text-sm text-gray-500">Automatically refreshes every 15s</div>
-      {loading && <div>Loading...</div>}
-      {items && items.length === 0 && <div className="text-sm text-gray-600">No incoming requests.</div>}
-      {items && items.length > 0 && (
-        <ul className="space-y-2 mt-2">
-          {items.map(r => (
-            <li key={r._id} className="p-2 border rounded">
-              <div className="font-semibold">{typeof r.user === 'object' ? r.user.firstName : 'Rider'}</div>
-              <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-
+interface RequestsListProps {
+  type: 'incoming' | 'outgoing';
+  userId: string;
+}
 
 function RequestsList({ type, userId }: RequestsListProps) {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Request[] | null>(null);
-  async function load(){
+  
+  const load = React.useCallback(async () => {
       
     if (!userId) return;
     setLoading(true);
@@ -114,25 +79,25 @@ function RequestsList({ type, userId }: RequestsListProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [type, userId]);
 
   useEffect(() => {
     load(); // initial load
     const interval = setInterval(load, 15000); // poll every 15s
     return () => clearInterval(interval);
-  }, [userId]);
+  }, [load]);
 
   return (
     <div>
       <div className="mb-2 text-sm text-gray-500">Automatically refreshes every 15s</div>
       {loading && <div>Loading...</div>}
-      {!loading && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
-      {items.length > 0 && (
+      {!loading && items && items.length === 0 && <div className="text-sm text-gray-600">No {type} requests.</div>}
+      {items && items.length > 0 && (
         <ul className="space-y-2 mt-2">
           {items.map((r) => (
             <li key={r._id} className="p-2 border rounded">
               <div className="font-semibold">
-                {type === "incoming" ? r.requestSender?.firstName || "Rider" : `To: ${r.driver?.firstName || "Driver"}`}
+                {type === "incoming" ? (typeof r.user === 'object' ? r.user.firstName : 'Rider') : `To: ${r.driver?.firstName || "Driver"}`}
               </div>
               <div className="text-sm text-gray-600">{r.startTime} — {r.finalTime}</div>
               {type === "outgoing" && (

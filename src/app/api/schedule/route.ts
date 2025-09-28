@@ -3,7 +3,7 @@ import clientPromise from '@/lib/mongodb';
 import mongooseConnect from '@/lib/mongoose';
 import Schedule from '@/lib/models/schedule';
 import User from '@/lib/models/user';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
 interface ExtendedSession {
