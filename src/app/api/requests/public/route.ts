@@ -5,7 +5,7 @@ import mongooseConnect from "@/lib/mongoose";
 
 export async function POST(req: NextRequest) {
   try {
-    await mongooseConnect;
+  await mongooseConnect();
 
     const body = await req.json();
     const { userId, beginLocation, finalLocation, date, startTime, finalTime } = body;
