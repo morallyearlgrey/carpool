@@ -17,12 +17,12 @@ function Input(props: React.ComponentProps<"input">) {
     // Coerce undefined/null to '' to keep it controlled
     // (this avoids React warning about switching from uncontrolled -> controlled)
     // Keep the prop present but normalized.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (inputProps as any).value = inputProps.value ?? '';
+    // Coerce value to string for controlled inputs
+    inputProps.value = String(inputProps.value ?? '');
   } else {
     // Ensure we don't accidentally pass an explicit value prop when uncontrolled
     // (keeps the element truly uncontrolled so `defaultValue` works)
-    delete (inputProps as any).value;
+    delete inputProps.value;
   }
 
   return (

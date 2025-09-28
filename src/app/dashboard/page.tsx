@@ -41,7 +41,7 @@ const [startTime, setStartTime] = useState(getCurrentTime());
     setShowComponent(true);
   }, []);
 
-  const animationClasses = (delay: string) =>
+  const animationClasses = () =>
     `transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`;
 
   // --- Handlers ---
@@ -74,7 +74,7 @@ const [startTime, setStartTime] = useState(getCurrentTime());
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          userId: (session as any)?.user?.id || (session as any)?.user?.email || '',
+          userId: (session as ExtendedSession)?.user?.id || (session as ExtendedSession)?.user?.email || '',
           beginLocation: { lat: start.latLng.lat(), long: start.latLng.lng() },
           finalLocation: { lat: end.latLng.lat(), long: end.latLng.lng() },
           date,
@@ -213,10 +213,6 @@ const handleOfferSubmit = async () => {
     )}
   </div>
 </div>
-
-
-
-
       </main>
     </div>
   );
