@@ -32,7 +32,7 @@ export default function ManualSchedulePage(){
 
 	// store multiple slots per weekday
 	const [slotsByDay, setSlotsByDay] = useState<Record<DayName, SlotType[]>>(() => {
-		const r: any = {};
+		const r: Record<DayName, SlotType[]> = {} as Record<DayName, SlotType[]>;
 		weekdays.forEach(d => r[d] = []);
 		return r;
 	});
@@ -58,28 +58,6 @@ export default function ManualSchedulePage(){
             try {
                 const parsedSchedule = JSON.parse(analyzedScheduleData);
                 if (parsedSchedule.availableTimes && Array.isArray(parsedSchedule.availableTimes)) {
-                    // Convert the analyzed schedule to the format expected by the form
-                    const newSlots = weekdays.map(day => {
-                        // Find matching day in analyzed schedule
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const matchingTime = parsedSchedule.availableTimes.find((time: any) => 
-                            time.day.toLowerCase() === day.toLowerCase()
-                        );
-                        
-                        if (matchingTime) {
-                            return {
-                                day,
-                                startTime: matchingTime.startTime || '',
-                                endTime: matchingTime.endTime || '',
-                                beginAddress: '', // Addresses aren't provided by Gemini, leave empty for user to fill
-                                finalAddress: ''
-                            };
-                        }
-                        
-                        // If no matching day found, return empty slot
-                        return { day, startTime: '', endTime: '', beginAddress: '', finalAddress: '' };
-                    });
-                    
 					// build slotsByDay from analyzed schedule
 					const byDay: Record<DayName, SlotType[]> = weekdays.reduce((acc, d) => { acc[d] = []; return acc; }, {} as Record<DayName, SlotType[]> );
 					for (const nt of parsedSchedule.availableTimes) {
@@ -386,7 +364,7 @@ export default function ManualSchedulePage(){
 				</div>
 
 				<div className="flex items-center gap-3 mt-4">
-					<button onClick={handleSubmit as any} className="px-4 py-2 bg-[#663399] text-white rounded disabled:opacity-60">{saving ? 'Saving...' : 'Save Schedule'}</button>
+					<button onClick={handleSubmit} className="px-4 py-2 bg-[#663399] text-white rounded disabled:opacity-60">{saving ? 'Saving...' : 'Save Schedule'}</button>
 					<button onClick={()=>{ setSlotsByDay(weekdays.reduce((acc, d) => { acc[d as DayName] = []; return acc; }, {} as Record<DayName, SlotType[]>)); setMessage(null); }} className="px-4 py-2 border rounded">Clear All</button>
 					{message && <div className="ml-4 text-sm">{message}</div>}
 				</div>
@@ -406,14 +384,14 @@ export default function ManualSchedulePage(){
 						<div className="relative w-full" style={{ minHeight: `${(timeToMinutes('22:00')-timeToMinutes('06:00'))/30 * 32}px` }}>
 							{/* vertical time labels */}
 							<div className="absolute left-0 top-0 w-16 text-xs text-gray-500">
-								{generateTimes('06:00','22:00',30).map((t,i)=>(
+								{generateTimes('06:00','22:00',30).map((t)=>(
 									<div key={t} style={{ height: 32 }} className="flex items-center">{t}</div>
 								))}
 							</div>
 
 							{/* weekdays columns */}
 							<div className="ml-16 grid grid-cols-7 gap-0">
-								{weekdays.map((d, colIndex) => (
+								{weekdays.map((d) => (
 									<div key={d} className="relative border-l border-gray-100" style={{ minHeight: '100%' }}>
 										{/* column background lines */}
 										{generateTimes('06:00','22:00',30).map(t=> (
