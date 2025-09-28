@@ -188,7 +188,7 @@ const DashboardPage = () => {
         {/* LEFT COLUMN */}
         <div className={`lg:col-span-1 flex p-6 flex-col gap-8 ${animationClasses('100ms')}`}>
           <MyRides currentUserId={(session as any)?.user?.id || (session as any)?.user?.email || ''} />
-          {session?.user?.id && <MyRequests currentUserId={session.user.id} />} || {<>hi</>}
+          {session?.user?.id && <MyRequests currentUserId={session.user.id} />}
         </div>
 
         {/* MIDDLE COLUMN */}
