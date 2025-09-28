@@ -376,8 +376,8 @@ export default function ManualSchedulePage(){
 													// Populate address input values for editing
 													setBeginAddressValue(ss.beginAddress || '');
 													setFinalAddressValue(ss.finalAddress || '');
-												}} className="text-xs text-blue-600">Edit</button>
-												<button onClick={() => removeSlotForDay(selectedDayIndex, si)} className="text-xs text-red-600">Remove</button>
+												}} className="text-xs text-blue-600 cursor-pointer">Edit</button>
+												<button onClick={() => removeSlotForDay(selectedDayIndex, si)} className="text-xs text-red-600 cursor-pointer">Remove</button>
 											</div>
 										</div>
 									))}
